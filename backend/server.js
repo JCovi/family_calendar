@@ -2,10 +2,13 @@ require("dotenv").config();
 
 const mongoose = require("mongoose");
 const express = require("express");
+const eventRoutes = require("./routes/events");
 
 const app = express();
 
 app.use(express.json());
+
+app.use("/api/events", eventRoutes);
 
 const PORT = 5000;
 
