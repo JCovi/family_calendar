@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Family Calendar</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="site-header">
+        <h1>Family Calendar</h1>
+    </header>
+
+    <main>
+
+        <!-- MONTH VIEW -->
+        <section id="monthView" class="calendar-container">
+
+            <div class="calendar-header">
+
+                <button id="previousMonth" class="month-button">
+                    &#10094;
+                </button>
+
+                <div class="date-navigation">
+                    <h2 id="monthName"></h2>
+                    <select id="yearSelect" aria-label="Select year"></select>
+                </div>
+
+                <button id="nextMonth" class="month-button">
+                    &#10095;
+                </button>
+
+            </div>
+
+            <div class="weekdays">
+                <div>Sun</div>
+                <div>Mon</div>
+                <div>Tue</div>
+                <div>Wed</div>
+                <div>Thu</div>
+                <div>Fri</div>
+                <div>Sat</div>
+            </div>
+
+            <div id="calendarGrid" class="calendar-grid"></div>
+
+        </section>
+
+
+        <!-- DAY VIEW -->
+        <section id="dayView" class="day-view hidden">
+
+            <button id="backToCalendar" class="back-button">
+                &#10094; Back to Calendar
+            </button>
+
+            <div class="day-header">
+                <h2 id="dayViewDate"></h2>
+            </div>
+
+            <div class="day-section">
+
+                <div class="section-heading">
+                    <h3>Events</h3>
+
+                    <button id="addEventButton" class="primary-button">
+                        + Add Event
+                    </button>
+                </div>
+
+                <!-- ADD EVENT FORM -->
+                <form id="eventForm" class="event-form hidden">
+
+                    <div class="form-group">
+                        <label for="eventTitle">Event Title</label>
+                        <input
+                            type="text"
+                            id="eventTitle"
+                            required
+                            maxlength="100"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="eventTime">Time</label>
+                        <input
+                            type="time"
+                            id="eventTime"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="eventLocation">Location</label>
+                        <input
+                            type="text"
+                            id="eventLocation"
+                            maxlength="200"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="eventNotes">Notes</label>
+                        <textarea
+                            id="eventNotes"
+                            rows="4"
+                            maxlength="1000"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button
+                            type="button"
+                            id="cancelEventButton"
+                            class="secondary-button"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="primary-button"
+                        >
+                            Save Event
+                        </button>
+                    </div>
+
+                </form>
+
+                <div id="eventsList" class="events-list">
+                    <p class="empty-message">
+                        No events have been added yet.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- PHOTOS -->
+            <div class="day-section">
+
+                <div class="section-heading">
+                    <h3>Photos</h3>
+                </div>
+
+                <div class="photos-placeholder">
+
+                    <p>No photos have been added yet.</p>
+
+                    <button class="secondary-button" disabled>
+                        Upload Photos
+                    </button>
+
+                    <p class="coming-soon">
+                        Photo uploads will be added in a later phase.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+
+</body>
+</html>
