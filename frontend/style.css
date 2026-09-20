@@ -9,15 +9,77 @@ body {
     color: #222;
 }
 
+/* AUTHENTICATION */
+
+.auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.auth-screen.hidden {
+    display: none;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    background-color: white;
+    border-radius: 12px;
+    padding: 35px;
+    border: 1px solid #e0e0e0;
+}
+
+.auth-card h1 {
+    margin: 0 0 10px;
+    text-align: center;
+    font-size: 30px;
+}
+
+.auth-subtitle {
+    margin: 0 0 25px;
+    text-align: center;
+    color: #666;
+}
+
+.auth-button {
+    width: 100%;
+    margin-top: 5px;
+}
+
+.login-error {
+    margin: 0 0 15px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background-color: #f4dddd;
+    color: #8b1e1e;
+    font-size: 14px;
+}
+
+.login-error.hidden {
+    display: none;
+}
+
+/* HEADER */
+
 .site-header {
     background-color: white;
     border-bottom: 1px solid #ddd;
     padding: 20px 30px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
 }
 
 .site-header h1 {
     margin: 0;
 }
+
+/* CALENDAR */
 
 .calendar-container,
 .day-view {
@@ -142,11 +204,52 @@ body {
     font-size: 14px;
 }
 
-/* DAY VIEW */
+/* GENERAL */
 
 .hidden {
     display: none;
 }
+
+.primary-button,
+.secondary-button,
+.edit-button,
+.delete-button {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.primary-button {
+    background-color: #222;
+    color: white;
+}
+
+.primary-button:hover {
+    background-color: #444;
+}
+
+.primary-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.secondary-button {
+    background-color: #eee;
+    color: #222;
+}
+
+.secondary-button:hover:not(:disabled) {
+    background-color: #ddd;
+}
+
+.secondary-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* DAY VIEW */
 
 .back-button {
     border: none;
@@ -192,41 +295,7 @@ body {
     font-size: 24px;
 }
 
-.primary-button,
-.secondary-button,
-.edit-button,
-.delete-button {
-    border: none;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-size: 15px;
-    cursor: pointer;
-}
-
-.primary-button {
-    background-color: #222;
-    color: white;
-}
-
-.primary-button:hover {
-    background-color: #444;
-}
-
-.secondary-button {
-    background-color: #eee;
-    color: #222;
-}
-
-.secondary-button:hover:not(:disabled) {
-    background-color: #ddd;
-}
-
-.secondary-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-/* EVENT FORM */
+/* FORMS */
 
 .event-form {
     margin-top: 20px;

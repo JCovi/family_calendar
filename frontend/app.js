@@ -1,43 +1,265 @@
-const monthView = document.getElementById("monthView");
-const dayView = document.getElementById("dayView");
+const loadingScreen =
+    document.getElementById("loadingScreen");
 
-const monthName = document.getElementById("monthName");
-const yearSelect = document.getElementById("yearSelect");
-const calendarGrid = document.getElementById("calendarGrid");
+const loginScreen =
+    document.getElementById("loginScreen");
 
-const previousMonthButton = document.getElementById("previousMonth");
-const nextMonthButton = document.getElementById("nextMonth");
+const appContainer =
+    document.getElementById("appContainer");
 
-const backToCalendarButton = document.getElementById("backToCalendar");
-const dayViewDate = document.getElementById("dayViewDate");
+const loginForm =
+    document.getElementById("loginForm");
 
-const addEventButton = document.getElementById("addEventButton");
-const cancelEventButton = document.getElementById("cancelEventButton");
+const loginPassword =
+    document.getElementById("loginPassword");
 
-const eventForm = document.getElementById("eventForm");
-const eventFormHeading = document.getElementById("eventFormHeading");
-const saveEventButton = document.getElementById("saveEventButton");
+const loginError =
+    document.getElementById("loginError");
 
-const eventTitle = document.getElementById("eventTitle");
-const eventTime = document.getElementById("eventTime");
-const eventLocation = document.getElementById("eventLocation");
-const eventNotes = document.getElementById("eventNotes");
+const loginButton =
+    document.getElementById("loginButton");
 
-const eventsList = document.getElementById("eventsList");
+const logoutButton =
+    document.getElementById("logoutButton");
+
+const monthView =
+    document.getElementById("monthView");
+
+const dayView =
+    document.getElementById("dayView");
+
+const monthName =
+    document.getElementById("monthName");
+
+const yearSelect =
+    document.getElementById("yearSelect");
+
+const calendarGrid =
+    document.getElementById("calendarGrid");
+
+const previousMonthButton =
+    document.getElementById("previousMonth");
+
+const nextMonthButton =
+    document.getElementById("nextMonth");
+
+const backToCalendarButton =
+    document.getElementById("backToCalendar");
+
+const dayViewDate =
+    document.getElementById("dayViewDate");
+
+const addEventButton =
+    document.getElementById("addEventButton");
+
+const cancelEventButton =
+    document.getElementById("cancelEventButton");
+
+const eventForm =
+    document.getElementById("eventForm");
+
+const eventFormHeading =
+    document.getElementById("eventFormHeading");
+
+const saveEventButton =
+    document.getElementById("saveEventButton");
+
+const eventTitle =
+    document.getElementById("eventTitle");
+
+const eventTime =
+    document.getElementById("eventTime");
+
+const eventLocation =
+    document.getElementById("eventLocation");
+
+const eventNotes =
+    document.getElementById("eventNotes");
+
+const eventsList =
+    document.getElementById("eventsList");
 
 let currentDate = new Date();
 let selectedDate = null;
 let editingEventId = null;
 
+let calendarInitialized = false;
+
+
+/* AUTHENTICATION */
+
+function showLoginScreen() {
+    loadingScreen.classList.add("hidden");
+    appContainer.classList.add("hidden");
+
+    loginScreen.classList.remove("hidden");
+
+    loginForm.reset();
+
+    loginError.textContent = "";
+    loginError.classList.add("hidden");
+
+    loginPassword.focus();
+}
+
+function showApplication() {
+    loadingScreen.classList.add("hidden");
+    loginScreen.classList.add("hidden");
+
+    appContainer.classList.remove("hidden");
+
+    if (!calendarInitialized) {
+        buildYearSelector();
+        calendarInitialized = true;
+    }
+
+    renderCalendar();
+}
+
+async function checkAuthentication() {
+    try {
+        const response = await fetch(
+            "/api/auth/status"
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                "Could not check authentication."
+            );
+        }
+
+        const data = await response.json();
+
+        if (data.authenticated) {
+            showApplication();
+        } else {
+            showLoginScreen();
+        }
+    } catch (error) {
+        console.error(error);
+
+        showLoginScreen();
+
+        loginError.textContent =
+            "Could not connect to the server.";
+
+        loginError.classList.remove("hidden");
+    }
+}
+
+loginForm.addEventListener(
+    "submit",
+    async (event) => {
+        event.preventDefault();
+
+        loginError.textContent = "";
+        loginError.classList.add("hidden");
+
+        loginButton.disabled = true;
+        loginButton.textContent = "Checking...";
+
+        try {
+            const response = await fetch(
+                "/api/auth/login",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        password:
+                            loginPassword.value
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                loginError.textContent =
+                    data.message ||
+                    "Login failed.";
+
+                loginError.classList.remove(
+                    "hidden"
+                );
+
+                loginPassword.select();
+
+                return;
+            }
+
+            loginForm.reset();
+
+            showApplication();
+        } catch (error) {
+            console.error(error);
+
+            loginError.textContent =
+                "Could not connect to the server.";
+
+            loginError.classList.remove("hidden");
+        } finally {
+            loginButton.disabled = false;
+            loginButton.textContent = "Enter";
+        }
+    }
+);
+
+logoutButton.addEventListener(
+    "click",
+    async () => {
+        try {
+            const response = await fetch(
+                "/api/auth/logout",
+                {
+                    method: "POST"
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    "Logout failed."
+                );
+            }
+
+            selectedDate = null;
+
+            resetEventForm();
+
+            dayView.classList.add("hidden");
+            monthView.classList.remove("hidden");
+
+            showLoginScreen();
+        } catch (error) {
+            console.error(error);
+
+            alert(
+                "Could not log out. Please try again."
+            );
+        }
+    }
+);
+
+
+/* CALENDAR HELPERS */
+
 function buildYearSelector() {
-    const currentYear = new Date().getFullYear();
+    const currentYear =
+        new Date().getFullYear();
+
+    yearSelect.innerHTML = "";
 
     for (
         let year = currentYear - 100;
         year <= currentYear + 50;
         year++
     ) {
-        const option = document.createElement("option");
+        const option =
+            document.createElement("option");
 
         option.value = year;
         option.textContent = year;
@@ -47,14 +269,20 @@ function buildYearSelector() {
 }
 
 function formatDate(year, month, day) {
-    const formattedMonth = String(month + 1).padStart(2, "0");
-    const formattedDay = String(day).padStart(2, "0");
+    const formattedMonth =
+        String(month + 1).padStart(2, "0");
 
-    return `${year}-${formattedMonth}-${formattedDay}`;
+    const formattedDay =
+        String(day).padStart(2, "0");
+
+    return (
+        `${year}-${formattedMonth}-${formattedDay}`
+    );
 }
 
 function formatMonth(year, month) {
-    const formattedMonth = String(month + 1).padStart(2, "0");
+    const formattedMonth =
+        String(month + 1).padStart(2, "0");
 
     return `${year}-${formattedMonth}`;
 }
@@ -70,18 +298,23 @@ function isToday(year, month, day) {
 }
 
 function formatDayViewDate(dateString) {
-    const [year, month, day] = dateString
-        .split("-")
-        .map(Number);
+    const [year, month, day] =
+        dateString
+            .split("-")
+            .map(Number);
 
-    const date = new Date(year, month - 1, day);
+    const date =
+        new Date(year, month - 1, day);
 
-    return date.toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        year: "numeric"
-    });
+    return date.toLocaleDateString(
+        "en-US",
+        {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric"
+        }
+    );
 }
 
 function formatEventTime(time) {
@@ -89,11 +322,13 @@ function formatEventTime(time) {
         return "";
     }
 
-    const [hourString, minute] = time.split(":");
+    const [hourString, minute] =
+        time.split(":");
 
     let hour = Number(hourString);
 
-    const period = hour >= 12 ? "PM" : "AM";
+    const period =
+        hour >= 12 ? "PM" : "AM";
 
     hour = hour % 12;
 
@@ -104,13 +339,19 @@ function formatEventTime(time) {
     return `${hour}:${minute} ${period}`;
 }
 
+
+/* EVENT FORM */
+
 function resetEventForm() {
     editingEventId = null;
 
     eventForm.reset();
 
-    eventFormHeading.textContent = "Add Event";
-    saveEventButton.textContent = "Save Event";
+    eventFormHeading.textContent =
+        "Add Event";
+
+    saveEventButton.textContent =
+        "Save Event";
 
     eventForm.classList.add("hidden");
 }
@@ -120,8 +361,11 @@ function openAddEventForm() {
 
     eventForm.reset();
 
-    eventFormHeading.textContent = "Add Event";
-    saveEventButton.textContent = "Save Event";
+    eventFormHeading.textContent =
+        "Add Event";
+
+    saveEventButton.textContent =
+        "Save Event";
 
     eventForm.classList.remove("hidden");
 
@@ -131,13 +375,23 @@ function openAddEventForm() {
 function openEditEventForm(event) {
     editingEventId = event._id;
 
-    eventTitle.value = event.title || "";
-    eventTime.value = event.startTime || "";
-    eventLocation.value = event.location || "";
-    eventNotes.value = event.notes || "";
+    eventTitle.value =
+        event.title || "";
 
-    eventFormHeading.textContent = "Edit Event";
-    saveEventButton.textContent = "Save Changes";
+    eventTime.value =
+        event.startTime || "";
+
+    eventLocation.value =
+        event.location || "";
+
+    eventNotes.value =
+        event.notes || "";
+
+    eventFormHeading.textContent =
+        "Edit Event";
+
+    saveEventButton.textContent =
+        "Save Changes";
 
     eventForm.classList.remove("hidden");
 
@@ -149,9 +403,27 @@ function openEditEventForm(event) {
     eventTitle.focus();
 }
 
+
+/* AUTH FAILURE HANDLING */
+
+function handleUnauthorized(response) {
+    if (response.status !== 401) {
+        return false;
+    }
+
+    showLoginScreen();
+
+    return true;
+}
+
+
+/* EVENT DATA */
+
 async function loadEventsForDay() {
     eventsList.innerHTML = `
-        <p class="empty-message">Loading events...</p>
+        <p class="empty-message">
+            Loading events...
+        </p>
     `;
 
     try {
@@ -159,11 +431,18 @@ async function loadEventsForDay() {
             `/api/events?date=${selectedDate}`
         );
 
-        if (!response.ok) {
-            throw new Error("Failed to load events.");
+        if (handleUnauthorized(response)) {
+            return;
         }
 
-        const events = await response.json();
+        if (!response.ok) {
+            throw new Error(
+                "Failed to load events."
+            );
+        }
+
+        const events =
+            await response.json();
 
         renderEvents(events);
     } catch (error) {
@@ -178,21 +457,32 @@ async function loadEventsForDay() {
 }
 
 async function loadMonthEventIndicators() {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+    const year =
+        currentDate.getFullYear();
 
-    const monthString = formatMonth(year, month);
+    const month =
+        currentDate.getMonth();
+
+    const monthString =
+        formatMonth(year, month);
 
     try {
         const response = await fetch(
             `/api/events?month=${monthString}`
         );
 
-        if (!response.ok) {
-            throw new Error("Failed to load month events.");
+        if (handleUnauthorized(response)) {
+            return;
         }
 
-        const events = await response.json();
+        if (!response.ok) {
+            throw new Error(
+                "Failed to load month events."
+            );
+        }
+
+        const events =
+            await response.json();
 
         const eventCounts = {};
 
@@ -206,9 +496,10 @@ async function loadMonthEventIndicators() {
 
         Object.entries(eventCounts).forEach(
             ([date, count]) => {
-                const dayElement = calendarGrid.querySelector(
-                    `[data-date="${date}"]`
-                );
+                const dayElement =
+                    calendarGrid.querySelector(
+                        `[data-date="${date}"]`
+                    );
 
                 if (!dayElement) {
                     return;
@@ -217,24 +508,35 @@ async function loadMonthEventIndicators() {
                 const indicator =
                     document.createElement("div");
 
-                indicator.classList.add("event-indicator");
+                indicator.classList.add(
+                    "event-indicator"
+                );
 
                 const icon =
                     document.createElement("span");
 
-                icon.classList.add("event-indicator-icon");
+                icon.classList.add(
+                    "event-indicator-icon"
+                );
+
                 icon.textContent = "📅";
 
                 const text =
                     document.createElement("span");
 
                 text.textContent =
-                    `${count} ${count === 1 ? "event" : "events"}`;
+                    `${count} ${
+                        count === 1
+                            ? "event"
+                            : "events"
+                    }`;
 
                 indicator.appendChild(icon);
                 indicator.appendChild(text);
 
-                dayElement.appendChild(indicator);
+                dayElement.appendChild(
+                    indicator
+                );
             }
         );
     } catch (error) {
@@ -256,41 +558,67 @@ function renderEvents(events) {
     }
 
     events.forEach((event) => {
-        const eventCard = document.createElement("div");
+        const eventCard =
+            document.createElement("div");
 
-        eventCard.classList.add("event-card");
+        eventCard.classList.add(
+            "event-card"
+        );
 
-        const cardHeader = document.createElement("div");
+        const cardHeader =
+            document.createElement("div");
 
-        cardHeader.classList.add("event-card-header");
+        cardHeader.classList.add(
+            "event-card-header"
+        );
 
-        const title = document.createElement("h4");
+        const title =
+            document.createElement("h4");
 
         title.textContent = event.title;
 
-        const actions = document.createElement("div");
+        const actions =
+            document.createElement("div");
 
-        actions.classList.add("event-actions");
+        actions.classList.add(
+            "event-actions"
+        );
 
-        const editButton = document.createElement("button");
+        const editButton =
+            document.createElement("button");
 
         editButton.type = "button";
-        editButton.classList.add("edit-button");
+
+        editButton.classList.add(
+            "edit-button"
+        );
+
         editButton.textContent = "Edit";
 
-        editButton.addEventListener("click", () => {
-            openEditEventForm(event);
-        });
+        editButton.addEventListener(
+            "click",
+            () => {
+                openEditEventForm(event);
+            }
+        );
 
-        const deleteButton = document.createElement("button");
+        const deleteButton =
+            document.createElement("button");
 
         deleteButton.type = "button";
-        deleteButton.classList.add("delete-button");
+
+        deleteButton.classList.add(
+            "delete-button"
+        );
+
         deleteButton.textContent = "Delete";
 
-        deleteButton.addEventListener("click", async () => {
-            await deleteEvent(event);
-        });
+        deleteButton.addEventListener(
+            "click",
+            async () => {
+                await deleteEvent(event);
+            }
+        );
 
         actions.appendChild(editButton);
         actions.appendChild(deleteButton);
@@ -301,20 +629,30 @@ function renderEvents(events) {
         eventCard.appendChild(cardHeader);
 
         if (event.startTime) {
-            const time = document.createElement("p");
+            const time =
+                document.createElement("p");
 
-            time.classList.add("event-detail");
+            time.classList.add(
+                "event-detail"
+            );
 
             time.textContent =
-                `Time: ${formatEventTime(event.startTime)}`;
+                `Time: ${
+                    formatEventTime(
+                        event.startTime
+                    )
+                }`;
 
             eventCard.appendChild(time);
         }
 
         if (event.location) {
-            const location = document.createElement("p");
+            const location =
+                document.createElement("p");
 
-            location.classList.add("event-detail");
+            location.classList.add(
+                "event-detail"
+            );
 
             location.textContent =
                 `Location: ${event.location}`;
@@ -323,9 +661,12 @@ function renderEvents(events) {
         }
 
         if (event.notes) {
-            const notes = document.createElement("p");
+            const notes =
+                document.createElement("p");
 
-            notes.classList.add("event-detail");
+            notes.classList.add(
+                "event-detail"
+            );
 
             notes.textContent =
                 `Notes: ${event.notes}`;
@@ -354,11 +695,19 @@ async function deleteEvent(event) {
             }
         );
 
-        if (!response.ok) {
-            throw new Error("Failed to delete event.");
+        if (handleUnauthorized(response)) {
+            return;
         }
 
-        if (editingEventId === event._id) {
+        if (!response.ok) {
+            throw new Error(
+                "Failed to delete event."
+            );
+        }
+
+        if (
+            editingEventId === event._id
+        ) {
             resetEventForm();
         }
 
@@ -366,9 +715,14 @@ async function deleteEvent(event) {
     } catch (error) {
         console.error(error);
 
-        alert("The event could not be deleted.");
+        alert(
+            "The event could not be deleted."
+        );
     }
 }
+
+
+/* DAY VIEW */
 
 async function openDayView(dateString) {
     selectedDate = dateString;
@@ -390,32 +744,53 @@ function closeDayView() {
     dayView.classList.add("hidden");
     monthView.classList.remove("hidden");
 
-    // Refresh indicators in case events were added,
-    // edited, or deleted while the Day View was open.
     renderCalendar();
 }
 
+
+/* CALENDAR */
+
 function renderCalendar() {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+    const year =
+        currentDate.getFullYear();
+
+    const month =
+        currentDate.getMonth();
 
     const displayMonth =
-        currentDate.toLocaleString("default", {
-            month: "long"
-        });
+        currentDate.toLocaleString(
+            "default",
+            {
+                month: "long"
+            }
+        );
 
-    monthName.textContent = displayMonth;
+    monthName.textContent =
+        displayMonth;
+
     yearSelect.value = year;
 
     calendarGrid.innerHTML = "";
 
     const firstDayOfMonth =
-        new Date(year, month, 1).getDay();
+        new Date(
+            year,
+            month,
+            1
+        ).getDay();
 
     const daysInMonth =
-        new Date(year, month + 1, 0).getDate();
+        new Date(
+            year,
+            month + 1,
+            0
+        ).getDate();
 
-    for (let i = 0; i < firstDayOfMonth; i++) {
+    for (
+        let i = 0;
+        i < firstDayOfMonth;
+        i++
+    ) {
         const emptyDay =
             document.createElement("div");
 
@@ -424,46 +799,87 @@ function renderCalendar() {
             "empty-day"
         );
 
-        calendarGrid.appendChild(emptyDay);
+        calendarGrid.appendChild(
+            emptyDay
+        );
     }
 
-    for (let day = 1; day <= daysInMonth; day++) {
+    for (
+        let day = 1;
+        day <= daysInMonth;
+        day++
+    ) {
         const dayElement =
             document.createElement("div");
 
-        dayElement.classList.add("calendar-day");
+        dayElement.classList.add(
+            "calendar-day"
+        );
 
         const dateString =
-            formatDate(year, month, day);
+            formatDate(
+                year,
+                month,
+                day
+            );
 
-        dayElement.dataset.date = dateString;
+        dayElement.dataset.date =
+            dateString;
 
-        if (isToday(year, month, day)) {
-            dayElement.classList.add("today");
+        if (
+            isToday(
+                year,
+                month,
+                day
+            )
+        ) {
+            dayElement.classList.add(
+                "today"
+            );
         }
 
         const dayNumber =
             document.createElement("span");
 
-        dayNumber.classList.add("day-number");
+        dayNumber.classList.add(
+            "day-number"
+        );
+
         dayNumber.textContent = day;
 
-        dayElement.appendChild(dayNumber);
+        dayElement.appendChild(
+            dayNumber
+        );
 
-        dayElement.addEventListener("click", () => {
-            openDayView(dateString);
-        });
+        dayElement.addEventListener(
+            "click",
+            () => {
+                openDayView(
+                    dateString
+                );
+            }
+        );
 
-        calendarGrid.appendChild(dayElement);
+        calendarGrid.appendChild(
+            dayElement
+        );
     }
 
     const totalCells =
-        firstDayOfMonth + daysInMonth;
+        firstDayOfMonth +
+        daysInMonth;
 
     const remainingCells =
-        (7 - (totalCells % 7)) % 7;
+        (
+            7 -
+            (totalCells % 7)
+        ) % 7;
 
-    for (let i = 0; i < remainingCells; i++) {
+    for (
+        let i = 0;
+        i < remainingCells;
+        i++
+    ) {
         const emptyDay =
             document.createElement("div");
 
@@ -472,103 +888,161 @@ function renderCalendar() {
             "empty-day"
         );
 
-        calendarGrid.appendChild(emptyDay);
+        calendarGrid.appendChild(
+            emptyDay
+        );
     }
 
     loadMonthEventIndicators();
 }
 
-previousMonthButton.addEventListener("click", () => {
-    currentDate.setMonth(
-        currentDate.getMonth() - 1
-    );
 
-    renderCalendar();
-});
+/* CALENDAR CONTROLS */
 
-nextMonthButton.addEventListener("click", () => {
-    currentDate.setMonth(
-        currentDate.getMonth() + 1
-    );
+previousMonthButton.addEventListener(
+    "click",
+    () => {
+        currentDate.setMonth(
+            currentDate.getMonth() - 1
+        );
 
-    renderCalendar();
-});
-
-yearSelect.addEventListener("change", () => {
-    currentDate.setFullYear(
-        Number(yearSelect.value)
-    );
-
-    renderCalendar();
-});
-
-backToCalendarButton.addEventListener("click", () => {
-    closeDayView();
-});
-
-addEventButton.addEventListener("click", () => {
-    openAddEventForm();
-});
-
-cancelEventButton.addEventListener("click", () => {
-    resetEventForm();
-});
-
-eventForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const eventData = {
-        title: eventTitle.value.trim(),
-        date: selectedDate,
-        startTime: eventTime.value,
-        location: eventLocation.value.trim(),
-        notes: eventNotes.value.trim()
-    };
-
-    try {
-        let response;
-
-        if (editingEventId) {
-            response = await fetch(
-                `/api/events/${editingEventId}`,
-                {
-                    method: "PUT",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify(eventData)
-                }
-            );
-        } else {
-            response = await fetch(
-                "/api/events",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify(eventData)
-                }
-            );
-        }
-
-        if (!response.ok) {
-            throw new Error("Failed to save event.");
-        }
-
-        resetEventForm();
-
-        await loadEventsForDay();
-    } catch (error) {
-        console.error(error);
-
-        alert("The event could not be saved.");
+        renderCalendar();
     }
-});
+);
 
-buildYearSelector();
-renderCalendar();
+nextMonthButton.addEventListener(
+    "click",
+    () => {
+        currentDate.setMonth(
+            currentDate.getMonth() + 1
+        );
+
+        renderCalendar();
+    }
+);
+
+yearSelect.addEventListener(
+    "change",
+    () => {
+        currentDate.setFullYear(
+            Number(yearSelect.value)
+        );
+
+        renderCalendar();
+    }
+);
+
+backToCalendarButton.addEventListener(
+    "click",
+    () => {
+        closeDayView();
+    }
+);
+
+addEventButton.addEventListener(
+    "click",
+    () => {
+        openAddEventForm();
+    }
+);
+
+cancelEventButton.addEventListener(
+    "click",
+    () => {
+        resetEventForm();
+    }
+);
+
+
+/* CREATE / EDIT EVENT */
+
+eventForm.addEventListener(
+    "submit",
+    async (event) => {
+        event.preventDefault();
+
+        const eventData = {
+            title:
+                eventTitle.value.trim(),
+
+            date:
+                selectedDate,
+
+            startTime:
+                eventTime.value,
+
+            location:
+                eventLocation.value.trim(),
+
+            notes:
+                eventNotes.value.trim()
+        };
+
+        try {
+            let response;
+
+            if (editingEventId) {
+                response = await fetch(
+                    `/api/events/${editingEventId}`,
+                    {
+                        method: "PUT",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(
+                                eventData
+                            )
+                    }
+                );
+            } else {
+                response = await fetch(
+                    "/api/events",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(
+                                eventData
+                            )
+                    }
+                );
+            }
+
+            if (
+                handleUnauthorized(response)
+            ) {
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    "Failed to save event."
+                );
+            }
+
+            resetEventForm();
+
+            await loadEventsForDay();
+        } catch (error) {
+            console.error(error);
+
+            alert(
+                "The event could not be saved."
+            );
+        }
+    }
+);
+
+
+/* START APPLICATION */
+
+checkAuthentication();
