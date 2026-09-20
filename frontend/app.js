@@ -53,6 +53,12 @@ function formatDate(year, month, day) {
     return `${year}-${formattedMonth}-${formattedDay}`;
 }
 
+function formatMonth(year, month) {
+    const formattedMonth = String(month + 1).padStart(2, "0");
+
+    return `${year}-${formattedMonth}`;
+}
+
 function isToday(year, month, day) {
     const today = new Date();
 
@@ -168,6 +174,71 @@ async function loadEventsForDay() {
                 Could not load events.
             </p>
         `;
+    }
+}
+
+async function loadMonthEventIndicators() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    const monthString = formatMonth(year, month);
+
+    try {
+        const response = await fetch(
+            `/api/events?month=${monthString}`
+        );
+
+        if (!response.ok) {
+            throw new Error("Failed to load month events.");
+        }
+
+        const events = await response.json();
+
+        const eventCounts = {};
+
+        events.forEach((event) => {
+            if (!eventCounts[event.date]) {
+                eventCounts[event.date] = 0;
+            }
+
+            eventCounts[event.date]++;
+        });
+
+        Object.entries(eventCounts).forEach(
+            ([date, count]) => {
+                const dayElement = calendarGrid.querySelector(
+                    `[data-date="${date}"]`
+                );
+
+                if (!dayElement) {
+                    return;
+                }
+
+                const indicator =
+                    document.createElement("div");
+
+                indicator.classList.add("event-indicator");
+
+                const icon =
+                    document.createElement("span");
+
+                icon.classList.add("event-indicator-icon");
+                icon.textContent = "📅";
+
+                const text =
+                    document.createElement("span");
+
+                text.textContent =
+                    `${count} ${count === 1 ? "event" : "events"}`;
+
+                indicator.appendChild(icon);
+                indicator.appendChild(text);
+
+                dayElement.appendChild(indicator);
+            }
+        );
+    } catch (error) {
+        console.error(error);
     }
 }
 
@@ -318,6 +389,10 @@ function closeDayView() {
 
     dayView.classList.add("hidden");
     monthView.classList.remove("hidden");
+
+    // Refresh indicators in case events were added,
+    // edited, or deleted while the Day View was open.
+    renderCalendar();
 }
 
 function renderCalendar() {
@@ -399,6 +474,8 @@ function renderCalendar() {
 
         calendarGrid.appendChild(emptyDay);
     }
+
+    loadMonthEventIndicators();
 }
 
 previousMonthButton.addEventListener("click", () => {

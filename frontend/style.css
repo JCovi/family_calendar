@@ -124,6 +124,24 @@ body {
     cursor: default;
 }
 
+/* MONTH EVENT INDICATORS */
+
+.event-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 6px 8px;
+    background-color: #f0f0f0;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.event-indicator-icon {
+    font-size: 14px;
+}
+
 /* DAY VIEW */
 
 .hidden {
