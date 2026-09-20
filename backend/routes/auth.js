@@ -1,5 +1,6 @@
 const express = require("express");
 const argon2 = require("argon2");
+const crypto = require("crypto");
 const rateLimit = require("express-rate-limit");
 
 const router = express.Router();
@@ -16,12 +17,25 @@ const loginLimiter = rateLimit({
     }
 });
 
+function getPasswordVersion() {
+    return crypto
+        .createHash("sha256")
+        .update(process.env.FAMILY_PASSWORD_HASH)
+        .digest("hex");
+}
+
 // CHECK LOGIN STATUS
 router.get("/status", (req, res) => {
+    const authenticated =
+        Boolean(
+            req.session &&
+            req.session.authenticated &&
+            req.session.passwordVersion ===
+                getPasswordVersion()
+        );
+
     res.json({
-        authenticated: Boolean(
-            req.session && req.session.authenticated
-        )
+        authenticated
     });
 });
 
@@ -39,10 +53,11 @@ router.post("/login", loginLimiter, async (req, res) => {
             });
         }
 
-        const passwordMatches = await argon2.verify(
-            process.env.FAMILY_PASSWORD_HASH,
-            password
-        );
+        const passwordMatches =
+            await argon2.verify(
+                process.env.FAMILY_PASSWORD_HASH,
+                password
+            );
 
         if (!passwordMatches) {
             return res.status(401).json({
@@ -60,6 +75,9 @@ router.post("/login", loginLimiter, async (req, res) => {
             }
 
             req.session.authenticated = true;
+
+            req.session.passwordVersion =
+                getPasswordVersion();
 
             req.session.save((saveError) => {
                 if (saveError) {
