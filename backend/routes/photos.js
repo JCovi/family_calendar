@@ -444,6 +444,57 @@ router.post(
     }
 );
 
+// ---------------------------------------------
+// DELETE PHOTO
+// ---------------------------------------------
+
+router.delete("/:id", async (req, res) => {
+    try {
+        const photo =
+            await Photo.findById(
+                req.params.id
+            );
+
+        if (!photo) {
+            return res.status(404).json({
+                message: "Photo not found."
+            });
+        }
+
+        // Delete the actual image from
+        // private Cloudflare R2 storage.
+        await r2.send(
+            new DeleteObjectCommand({
+                Bucket:
+                    process.env.R2_BUCKET_NAME,
+
+                Key:
+                    photo.storageKey
+            })
+        );
+
+        // Only remove the MongoDB record
+        // after R2 deletion succeeds.
+        await Photo.findByIdAndDelete(
+            photo._id
+        );
+
+        res.json({
+            message:
+                "Photo deleted successfully."
+        });
+    } catch (error) {
+        console.error(
+            "Photo deletion error:",
+            error
+        );
+
+        res.status(500).json({
+            message:
+                "Failed to delete photo."
+        });
+    }
+});
 
 // ---------------------------------------------
 // MULTER ERROR HANDLING

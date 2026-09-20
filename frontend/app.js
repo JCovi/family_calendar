@@ -134,6 +134,11 @@ const nextPhotoButton =
         "nextPhoto"
     );
 
+const deletePhotoButton =
+    document.getElementById(
+        "deletePhotoButton"
+    );
+
 let currentDate = new Date();
 let selectedDate = null;
 let editingEventId = null;
@@ -1538,7 +1543,75 @@ photoInput.addEventListener(
     }
 );
 
+async function deleteCurrentPhoto() {
+    const photo =
+        currentPhotos[currentPhotoIndex];
+
+    if (!photo) {
+        return;
+    }
+
+    const confirmed = confirm(
+        "Delete this photo? This cannot be undone."
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    deletePhotoButton.disabled = true;
+    deletePhotoButton.textContent =
+        "Deleting...";
+
+    try {
+        const response = await fetch(
+            `/api/photos/${photo._id}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        if (handleUnauthorized(response)) {
+            closePhotoViewer();
+            return;
+        }
+
+        const data =
+            await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.message ||
+                "Failed to delete photo."
+            );
+        }
+
+        closePhotoViewer();
+
+        await loadPhotosForDay();
+
+    } catch (error) {
+        console.error(error);
+
+        alert(
+            error.message ||
+            "The photo could not be deleted."
+        );
+    } finally {
+        deletePhotoButton.disabled =
+            false;
+
+        deletePhotoButton.textContent =
+            "Delete Photo";
+    }
+}
+
 /* PHOTO VIEWER CONTROLS */
+
+deletePhotoButton.addEventListener(
+    "click",
+    deleteCurrentPhoto
+);
 
 closePhotoViewerButton.addEventListener(
     "click",
