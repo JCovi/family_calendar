@@ -3,14 +3,17 @@ const router = express.Router();
 
 const Event = require("../models/Event");
 
-// GET all events, optionally filtered by month
+// GET events, optionally filtered by exact date or month
 router.get("/", async (req, res) => {
     try {
-        const { month } = req.query;
+        const { date, month } = req.query;
 
         let filter = {};
 
-        if (month) {
+        // Exact day takes priority
+        if (date) {
+            filter.date = date;
+        } else if (month) {
             filter.date = {
                 $regex: `^${month}`
             };
@@ -23,6 +26,8 @@ router.get("/", async (req, res) => {
 
         res.json(events);
     } catch (error) {
+        console.error(error);
+
         res.status(500).json({
             message: "Failed to retrieve events."
         });
@@ -50,13 +55,13 @@ router.post("/", async (req, res) => {
 
         res.status(201).json(event);
     } catch (error) {
+        console.error(error);
+
         res.status(400).json({
             message: "Failed to create event."
         });
     }
 });
-
-module.exports = router;
 
 // UPDATE an existing event
 router.put("/:id", async (req, res) => {
@@ -65,7 +70,7 @@ router.put("/:id", async (req, res) => {
             req.params.id,
             req.body,
             {
-                new: true,
+                returnDocument: "after",
                 runValidators: true
             }
         );
@@ -78,6 +83,8 @@ router.put("/:id", async (req, res) => {
 
         res.json(updatedEvent);
     } catch (error) {
+        console.error(error);
+
         res.status(400).json({
             message: "Failed to update event."
         });
@@ -87,7 +94,9 @@ router.put("/:id", async (req, res) => {
 // DELETE an event
 router.delete("/:id", async (req, res) => {
     try {
-        const deletedEvent = await Event.findByIdAndDelete(req.params.id);
+        const deletedEvent = await Event.findByIdAndDelete(
+            req.params.id
+        );
 
         if (!deletedEvent) {
             return res.status(404).json({
@@ -99,8 +108,12 @@ router.delete("/:id", async (req, res) => {
             message: "Event deleted successfully."
         });
     } catch (error) {
+        console.error(error);
+
         res.status(400).json({
             message: "Failed to delete event."
         });
     }
 });
+
+module.exports = router;

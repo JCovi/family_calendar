@@ -73,11 +73,14 @@
                     </button>
                 </div>
 
-                <!-- ADD EVENT FORM -->
+                <!-- EVENT FORM -->
                 <form id="eventForm" class="event-form hidden">
+
+                    <h4 id="eventFormHeading">Add Event</h4>
 
                     <div class="form-group">
                         <label for="eventTitle">Event Title</label>
+
                         <input
                             type="text"
                             id="eventTitle"
@@ -88,6 +91,7 @@
 
                     <div class="form-group">
                         <label for="eventTime">Time</label>
+
                         <input
                             type="time"
                             id="eventTime"
@@ -96,6 +100,7 @@
 
                     <div class="form-group">
                         <label for="eventLocation">Location</label>
+
                         <input
                             type="text"
                             id="eventLocation"
@@ -105,6 +110,7 @@
 
                     <div class="form-group">
                         <label for="eventNotes">Notes</label>
+
                         <textarea
                             id="eventNotes"
                             rows="4"
@@ -113,6 +119,7 @@
                     </div>
 
                     <div class="form-actions">
+
                         <button
                             type="button"
                             id="cancelEventButton"
@@ -123,10 +130,12 @@
 
                         <button
                             type="submit"
+                            id="saveEventButton"
                             class="primary-button"
                         >
                             Save Event
                         </button>
+
                     </div>
 
                 </form>

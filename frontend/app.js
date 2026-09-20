@@ -15,6 +15,9 @@ const addEventButton = document.getElementById("addEventButton");
 const cancelEventButton = document.getElementById("cancelEventButton");
 
 const eventForm = document.getElementById("eventForm");
+const eventFormHeading = document.getElementById("eventFormHeading");
+const saveEventButton = document.getElementById("saveEventButton");
+
 const eventTitle = document.getElementById("eventTitle");
 const eventTime = document.getElementById("eventTime");
 const eventLocation = document.getElementById("eventLocation");
@@ -24,6 +27,7 @@ const eventsList = document.getElementById("eventsList");
 
 let currentDate = new Date();
 let selectedDate = null;
+let editingEventId = null;
 
 function buildYearSelector() {
     const currentYear = new Date().getFullYear();
@@ -80,6 +84,7 @@ function formatEventTime(time) {
     }
 
     const [hourString, minute] = time.split(":");
+
     let hour = Number(hourString);
 
     const period = hour >= 12 ? "PM" : "AM";
@@ -91,6 +96,51 @@ function formatEventTime(time) {
     }
 
     return `${hour}:${minute} ${period}`;
+}
+
+function resetEventForm() {
+    editingEventId = null;
+
+    eventForm.reset();
+
+    eventFormHeading.textContent = "Add Event";
+    saveEventButton.textContent = "Save Event";
+
+    eventForm.classList.add("hidden");
+}
+
+function openAddEventForm() {
+    editingEventId = null;
+
+    eventForm.reset();
+
+    eventFormHeading.textContent = "Add Event";
+    saveEventButton.textContent = "Save Event";
+
+    eventForm.classList.remove("hidden");
+
+    eventTitle.focus();
+}
+
+function openEditEventForm(event) {
+    editingEventId = event._id;
+
+    eventTitle.value = event.title || "";
+    eventTime.value = event.startTime || "";
+    eventLocation.value = event.location || "";
+    eventNotes.value = event.notes || "";
+
+    eventFormHeading.textContent = "Edit Event";
+    saveEventButton.textContent = "Save Changes";
+
+    eventForm.classList.remove("hidden");
+
+    eventForm.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+    });
+
+    eventTitle.focus();
 }
 
 async function loadEventsForDay() {
@@ -139,15 +189,51 @@ function renderEvents(events) {
 
         eventCard.classList.add("event-card");
 
+        const cardHeader = document.createElement("div");
+
+        cardHeader.classList.add("event-card-header");
+
         const title = document.createElement("h4");
+
         title.textContent = event.title;
 
-        eventCard.appendChild(title);
+        const actions = document.createElement("div");
+
+        actions.classList.add("event-actions");
+
+        const editButton = document.createElement("button");
+
+        editButton.type = "button";
+        editButton.classList.add("edit-button");
+        editButton.textContent = "Edit";
+
+        editButton.addEventListener("click", () => {
+            openEditEventForm(event);
+        });
+
+        const deleteButton = document.createElement("button");
+
+        deleteButton.type = "button";
+        deleteButton.classList.add("delete-button");
+        deleteButton.textContent = "Delete";
+
+        deleteButton.addEventListener("click", async () => {
+            await deleteEvent(event);
+        });
+
+        actions.appendChild(editButton);
+        actions.appendChild(deleteButton);
+
+        cardHeader.appendChild(title);
+        cardHeader.appendChild(actions);
+
+        eventCard.appendChild(cardHeader);
 
         if (event.startTime) {
             const time = document.createElement("p");
 
             time.classList.add("event-detail");
+
             time.textContent =
                 `Time: ${formatEventTime(event.startTime)}`;
 
@@ -158,6 +244,7 @@ function renderEvents(events) {
             const location = document.createElement("p");
 
             location.classList.add("event-detail");
+
             location.textContent =
                 `Location: ${event.location}`;
 
@@ -168,6 +255,7 @@ function renderEvents(events) {
             const notes = document.createElement("p");
 
             notes.classList.add("event-detail");
+
             notes.textContent =
                 `Notes: ${event.notes}`;
 
@@ -178,14 +266,46 @@ function renderEvents(events) {
     });
 }
 
+async function deleteEvent(event) {
+    const confirmed = confirm(
+        `Delete "${event.title}"?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `/api/events/${event._id}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("Failed to delete event.");
+        }
+
+        if (editingEventId === event._id) {
+            resetEventForm();
+        }
+
+        await loadEventsForDay();
+    } catch (error) {
+        console.error(error);
+
+        alert("The event could not be deleted.");
+    }
+}
+
 async function openDayView(dateString) {
     selectedDate = dateString;
 
     dayViewDate.textContent =
         formatDayViewDate(dateString);
 
-    eventForm.classList.add("hidden");
-    eventForm.reset();
+    resetEventForm();
 
     monthView.classList.add("hidden");
     dayView.classList.remove("hidden");
@@ -194,6 +314,8 @@ async function openDayView(dateString) {
 }
 
 function closeDayView() {
+    resetEventForm();
+
     dayView.classList.add("hidden");
     monthView.classList.remove("hidden");
 }
@@ -308,20 +430,17 @@ backToCalendarButton.addEventListener("click", () => {
 });
 
 addEventButton.addEventListener("click", () => {
-    eventForm.reset();
-    eventForm.classList.remove("hidden");
-    eventTitle.focus();
+    openAddEventForm();
 });
 
 cancelEventButton.addEventListener("click", () => {
-    eventForm.reset();
-    eventForm.classList.add("hidden");
+    resetEventForm();
 });
 
 eventForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const newEvent = {
+    const eventData = {
         title: eventTitle.value.trim(),
         date: selectedDate,
         startTime: eventTime.value,
@@ -330,22 +449,41 @@ eventForm.addEventListener("submit", async (event) => {
     };
 
     try {
-        const response = await fetch("/api/events", {
-            method: "POST",
+        let response;
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+        if (editingEventId) {
+            response = await fetch(
+                `/api/events/${editingEventId}`,
+                {
+                    method: "PUT",
 
-            body: JSON.stringify(newEvent)
-        });
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
 
-        if (!response.ok) {
-            throw new Error("Failed to create event.");
+                    body: JSON.stringify(eventData)
+                }
+            );
+        } else {
+            response = await fetch(
+                "/api/events",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(eventData)
+                }
+            );
         }
 
-        eventForm.reset();
-        eventForm.classList.add("hidden");
+        if (!response.ok) {
+            throw new Error("Failed to save event.");
+        }
+
+        resetEventForm();
 
         await loadEventsForDay();
     } catch (error) {
