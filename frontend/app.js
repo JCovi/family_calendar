@@ -139,6 +139,16 @@ const deletePhotoButton =
         "deletePhotoButton"
     );
 
+const photoCaptionInput =
+    document.getElementById(
+        "photoCaptionInput"
+    );
+
+const savePhotoCaptionButton =
+    document.getElementById(
+        "savePhotoCaptionButton"
+    );
+
 let currentDate = new Date();
 let selectedDate = null;
 let editingEventId = null;
@@ -846,10 +856,13 @@ function updatePhotoViewer() {
     photoViewerCaption.textContent =
         photo.caption || "";
 
+    photoCaptionInput.value =
+        photo.caption || "";
+
     photoViewerCounter.textContent =
-        `${currentPhotoIndex + 1} of ${
-            currentPhotos.length
-        }`;
+         `${currentPhotoIndex + 1} of ${
+             currentPhotos.length
+          }`;
 
     const multiplePhotos =
         currentPhotos.length > 1;
@@ -1543,6 +1556,97 @@ photoInput.addEventListener(
     }
 );
 
+async function saveCurrentPhotoCaption() {
+    const photo =
+        currentPhotos[currentPhotoIndex];
+
+    if (!photo) {
+        return;
+    }
+
+    const caption =
+        photoCaptionInput.value.trim();
+
+    savePhotoCaptionButton.disabled =
+        true;
+
+    savePhotoCaptionButton.textContent =
+        "Saving...";
+
+    try {
+        const response = await fetch(
+            `/api/photos/${photo._id}/caption`,
+            {
+                method: "PUT",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+                    caption
+                })
+            }
+        );
+
+        if (handleUnauthorized(response)) {
+            closePhotoViewer();
+            return;
+        }
+
+        const data =
+            await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.message ||
+                "Failed to save caption."
+            );
+        }
+
+        photo.caption =
+            data.photo.caption;
+
+        photoViewerCaption.textContent =
+            photo.caption || "";
+
+        await loadPhotosForDay();
+
+        /*
+         * loadPhotosForDay() rebuilds
+         * currentPhotos, so find this
+         * same photo again.
+         */
+        const updatedIndex =
+            currentPhotos.findIndex(
+                (item) =>
+                    item._id === photo._id
+            );
+
+        if (updatedIndex !== -1) {
+            currentPhotoIndex =
+                updatedIndex;
+        }
+
+        updatePhotoViewer();
+
+    } catch (error) {
+        console.error(error);
+
+        alert(
+            error.message ||
+            "The caption could not be saved."
+        );
+    } finally {
+        savePhotoCaptionButton.disabled =
+            false;
+
+        savePhotoCaptionButton.textContent =
+            "Save Caption";
+    }
+}
+
 async function deleteCurrentPhoto() {
     const photo =
         currentPhotos[currentPhotoIndex];
@@ -1607,6 +1711,11 @@ async function deleteCurrentPhoto() {
 }
 
 /* PHOTO VIEWER CONTROLS */
+
+savePhotoCaptionButton.addEventListener(
+    "click",
+    saveCurrentPhotoCaption
+);
 
 deletePhotoButton.addEventListener(
     "click",

@@ -445,6 +445,90 @@ router.post(
 );
 
 // ---------------------------------------------
+// UPDATE PHOTO CAPTION
+// ---------------------------------------------
+
+router.put("/:id/caption", async (req, res) => {
+    try {
+        const { caption } = req.body;
+
+        if (typeof caption !== "string") {
+            return res.status(400).json({
+                message:
+                    "Caption must be text."
+            });
+        }
+
+        const cleanCaption =
+            caption.trim();
+
+        if (cleanCaption.length > 500) {
+            return res.status(400).json({
+                message:
+                    "Caption must be 500 characters or fewer."
+            });
+        }
+
+        const photo =
+            await Photo.findByIdAndUpdate(
+                req.params.id,
+                {
+                    caption:
+                        cleanCaption
+                },
+                {
+                    returnDocument: "after",
+                    runValidators: true
+                }
+            );
+
+        if (!photo) {
+            return res.status(404).json({
+                message: "Photo not found."
+            });
+        }
+
+        res.json({
+            message:
+                "Caption saved successfully.",
+
+            photo: {
+                _id:
+                    photo._id,
+
+                date:
+                    photo.date,
+
+                originalName:
+                    photo.originalName,
+
+                mimeType:
+                    photo.mimeType,
+
+                size:
+                    photo.size,
+
+                caption:
+                    photo.caption,
+
+                imageUrl:
+                    `/api/photos/${photo._id}/image`
+            }
+        });
+    } catch (error) {
+        console.error(
+            "Caption update error:",
+            error
+        );
+
+        res.status(500).json({
+            message:
+                "Failed to save caption."
+        });
+    }
+});
+
+// ---------------------------------------------
 // DELETE PHOTO
 // ---------------------------------------------
 

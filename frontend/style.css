@@ -728,6 +728,60 @@ body {
     }
 }
 
+/* PHOTO CAPTION EDITOR */
+
+.photo-caption-editor {
+    width: min(500px, 90vw);
+    margin-top: 14px;
+    display: flex;
+    gap: 8px;
+}
+
+.photo-caption-input {
+    flex: 1;
+    min-height: 42px;
+    padding: 9px 10px;
+
+    border: 1px solid #666;
+    border-radius: 6px;
+
+    background: #222;
+    color: white;
+
+    font-family: inherit;
+    font-size: 14px;
+
+    resize: vertical;
+}
+
+.photo-caption-input::placeholder {
+    color: #aaaaaa;
+}
+
+.photo-caption-save {
+    align-self: flex-start;
+
+    padding: 10px 14px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: white;
+    color: #222;
+
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.photo-caption-save:hover {
+    background: #e6e6e6;
+}
+
+.photo-caption-save:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
 .photo-viewer-delete {
     margin-top: 14px;
     padding: 8px 14px;
