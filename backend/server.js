@@ -7,6 +7,7 @@ const session = require("express-session");
 const { MongoStore } = require("connect-mongo");
 
 const eventRoutes = require("./routes/events");
+const photoRoutes = require("./routes/photos");
 const authRoutes = require("./routes/auth");
 
 const requireAuth = require("./middleware/auth");
@@ -53,8 +54,9 @@ app.use(
 // AUTHENTICATION API
 app.use("/api/auth", authRoutes);
 
-// PROTECTED EVENT API
+// PROTECTED APIs
 app.use("/api/events", requireAuth, eventRoutes);
+app.use("/api/photos", requireAuth, photoRoutes);
 
 // Serve the frontend.
 app.use(

@@ -79,9 +79,66 @@ const eventNotes =
 const eventsList =
     document.getElementById("eventsList");
 
+const uploadPhotosButton =
+    document.getElementById(
+        "uploadPhotosButton"
+    );
+
+const photoInput =
+    document.getElementById(
+        "photoInput"
+    );
+
+const photoUploadStatus =
+    document.getElementById(
+        "photoUploadStatus"
+    );
+
+const photosContainer =
+    document.getElementById(
+        "photosContainer"
+    );
+
+    const photoViewer =
+    document.getElementById(
+        "photoViewer"
+    );
+
+const photoViewerImage =
+    document.getElementById(
+        "photoViewerImage"
+    );
+
+const photoViewerCaption =
+    document.getElementById(
+        "photoViewerCaption"
+    );
+
+const photoViewerCounter =
+    document.getElementById(
+        "photoViewerCounter"
+    );
+
+const closePhotoViewerButton =
+    document.getElementById(
+        "closePhotoViewer"
+    );
+
+const previousPhotoButton =
+    document.getElementById(
+        "previousPhoto"
+    );
+
+const nextPhotoButton =
+    document.getElementById(
+        "nextPhoto"
+    );
+
 let currentDate = new Date();
 let selectedDate = null;
 let editingEventId = null;
+let currentPhotos = [];
+let currentPhotoIndex = 0;
 
 let calendarInitialized = false;
 
@@ -721,6 +778,326 @@ async function deleteEvent(event) {
     }
 }
 
+/* PHOTO DATA */
+
+function openPhotoViewer(index) {
+    if (
+        index < 0 ||
+        index >= currentPhotos.length
+    ) {
+        return;
+    }
+
+    currentPhotoIndex = index;
+
+    updatePhotoViewer();
+
+    photoViewer.classList.remove(
+        "hidden"
+    );
+
+    photoViewer.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    document.body.style.overflow =
+        "hidden";
+}
+
+
+function closePhotoViewer() {
+    photoViewer.classList.add(
+        "hidden"
+    );
+
+    photoViewer.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    photoViewerImage.src = "";
+
+    document.body.style.overflow = "";
+}
+
+
+function updatePhotoViewer() {
+    const photo =
+        currentPhotos[currentPhotoIndex];
+
+    if (!photo) {
+        return;
+    }
+
+    photoViewerImage.src =
+        photo.imageUrl;
+
+    photoViewerImage.alt =
+        photo.caption ||
+        photo.originalName ||
+        "Family photo";
+
+    photoViewerCaption.textContent =
+        photo.caption || "";
+
+    photoViewerCounter.textContent =
+        `${currentPhotoIndex + 1} of ${
+            currentPhotos.length
+        }`;
+
+    const multiplePhotos =
+        currentPhotos.length > 1;
+
+    previousPhotoButton.classList.toggle(
+        "hidden",
+        !multiplePhotos
+    );
+
+    nextPhotoButton.classList.toggle(
+        "hidden",
+        !multiplePhotos
+    );
+}
+
+
+function showPreviousPhoto() {
+    if (currentPhotos.length <= 1) {
+        return;
+    }
+
+    currentPhotoIndex--;
+
+    if (currentPhotoIndex < 0) {
+        currentPhotoIndex =
+            currentPhotos.length - 1;
+    }
+
+    updatePhotoViewer();
+}
+
+
+function showNextPhoto() {
+    if (currentPhotos.length <= 1) {
+        return;
+    }
+
+    currentPhotoIndex++;
+
+    if (
+        currentPhotoIndex >=
+        currentPhotos.length
+    ) {
+        currentPhotoIndex = 0;
+    }
+
+    updatePhotoViewer();
+}
+
+async function loadPhotosForDay() {
+    photosContainer.innerHTML = `
+        <p class="photo-message">
+            Loading photos...
+        </p>
+    `;
+
+    try {
+        const response = await fetch(
+            `/api/photos?date=${selectedDate}`
+        );
+
+        if (handleUnauthorized(response)) {
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                "Failed to load photos."
+            );
+        }
+
+        const photos =
+            await response.json();
+
+        renderPhotos(photos);
+    } catch (error) {
+        console.error(error);
+
+        photosContainer.innerHTML = `
+            <p class="photo-message">
+                Could not load photos.
+            </p>
+        `;
+    }
+}
+
+
+function renderPhotos(photos) {
+    photosContainer.innerHTML = "";
+
+    currentPhotos = photos;
+
+    if (photos.length === 0) {
+        photosContainer.innerHTML = `
+            <p class="photo-message">
+                No photos have been added yet.
+            </p>
+        `;
+
+        return;
+    }
+
+    const photoGrid =
+        document.createElement("div");
+
+    photoGrid.classList.add(
+        "photos-grid"
+    );
+
+    photos.forEach((photo, index) => {
+        const photoItem =
+            document.createElement("div");
+
+        photoItem.classList.add(
+            "photo-item"
+        );
+
+        const image =
+            document.createElement("img");
+
+        image.src =
+            photo.imageUrl;
+
+        image.alt =
+            photo.caption ||
+            photo.originalName ||
+            "Family photo";
+
+        image.loading = "lazy";
+
+        photoItem.appendChild(image);
+
+        photoItem.addEventListener(
+            "click",
+            () => {
+                 openPhotoViewer(index);
+             }
+        );
+
+        if (photo.caption) {
+            const caption =
+                document.createElement("p");
+
+            caption.classList.add(
+                "photo-caption"
+            );
+
+            caption.textContent =
+                photo.caption;
+
+            photoItem.appendChild(
+                caption
+            );
+        }
+
+        photoGrid.appendChild(
+            photoItem
+        );
+    });
+
+    photosContainer.appendChild(
+        photoGrid
+    );
+}
+
+
+async function loadMonthPhotoIndicators() {
+    const year =
+        currentDate.getFullYear();
+
+    const month =
+        currentDate.getMonth();
+
+    const monthString =
+        formatMonth(year, month);
+
+    try {
+        const response = await fetch(
+            `/api/photos?month=${monthString}`
+        );
+
+        if (handleUnauthorized(response)) {
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                "Failed to load month photos."
+            );
+        }
+
+        const photos =
+            await response.json();
+
+        const photoCounts = {};
+
+        photos.forEach((photo) => {
+            if (!photoCounts[photo.date]) {
+                photoCounts[photo.date] = 0;
+            }
+
+            photoCounts[photo.date]++;
+        });
+
+        Object.entries(photoCounts).forEach(
+            ([date, count]) => {
+                const dayElement =
+                    calendarGrid.querySelector(
+                        `[data-date="${date}"]`
+                    );
+
+                if (!dayElement) {
+                    return;
+                }
+
+                const indicator =
+                    document.createElement("div");
+
+                indicator.classList.add(
+                    "photo-indicator"
+                );
+
+                const icon =
+                    document.createElement("span");
+
+                icon.classList.add(
+                    "photo-indicator-icon"
+                );
+
+                icon.textContent = "📷";
+
+                const text =
+                    document.createElement("span");
+
+                text.textContent =
+                    `${count} ${
+                        count === 1
+                            ? "photo"
+                            : "photos"
+                    }`;
+
+                indicator.appendChild(icon);
+                indicator.appendChild(text);
+
+                dayElement.appendChild(
+                    indicator
+                );
+            }
+        );
+    } catch (error) {
+        console.error(error);
+    }
+}
 
 /* DAY VIEW */
 
@@ -732,10 +1109,17 @@ async function openDayView(dateString) {
 
     resetEventForm();
 
+    photoUploadStatus.textContent = "";
+    photoUploadStatus.className =
+        "photo-upload-status hidden";
+
     monthView.classList.add("hidden");
     dayView.classList.remove("hidden");
 
-    await loadEventsForDay();
+    await Promise.all([
+        loadEventsForDay(),
+        loadPhotosForDay()
+    ]);
 }
 
 function closeDayView() {
@@ -894,6 +1278,7 @@ function renderCalendar() {
     }
 
     loadMonthEventIndicators();
+    loadMonthPhotoIndicators();
 }
 
 
@@ -1042,6 +1427,167 @@ eventForm.addEventListener(
     }
 );
 
+/* PHOTO UPLOAD */
+
+uploadPhotosButton.addEventListener(
+    "click",
+    () => {
+        photoInput.click();
+    }
+);
+
+photoInput.addEventListener(
+    "change",
+    async () => {
+        const files =
+            Array.from(photoInput.files);
+
+        if (files.length === 0) {
+            return;
+        }
+
+        if (files.length > 25) {
+            photoUploadStatus.textContent =
+                "You can upload a maximum of 25 photos at once.";
+
+            photoUploadStatus.className =
+                "photo-upload-status error";
+
+            photoInput.value = "";
+
+            return;
+        }
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "date",
+            selectedDate
+        );
+
+        files.forEach((file) => {
+            formData.append(
+                "photos",
+                file
+            );
+        });
+
+        uploadPhotosButton.disabled = true;
+
+        photoUploadStatus.textContent =
+            `Uploading ${
+                files.length
+            } ${
+                files.length === 1
+                    ? "photo"
+                    : "photos"
+            }...`;
+
+        photoUploadStatus.className =
+            "photo-upload-status";
+
+        try {
+            const response = await fetch(
+                "/api/photos/upload",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+            if (
+                handleUnauthorized(response)
+            ) {
+                return;
+            }
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Photo upload failed."
+                );
+            }
+
+            photoUploadStatus.textContent =
+                 data.message;
+
+            photoUploadStatus.className =
+                "photo-upload-status success";
+
+            await loadPhotosForDay();
+
+        } catch (error) {
+            console.error(error);
+
+            photoUploadStatus.textContent =
+                error.message ||
+                "Photo upload failed.";
+
+            photoUploadStatus.className =
+                "photo-upload-status error";
+        } finally {
+            uploadPhotosButton.disabled =
+                false;
+
+            photoInput.value = "";
+        }
+    }
+);
+
+/* PHOTO VIEWER CONTROLS */
+
+closePhotoViewerButton.addEventListener(
+    "click",
+    closePhotoViewer
+);
+
+previousPhotoButton.addEventListener(
+    "click",
+    showPreviousPhoto
+);
+
+nextPhotoButton.addEventListener(
+    "click",
+    showNextPhoto
+);
+
+photoViewer.addEventListener(
+    "click",
+    (event) => {
+        if (event.target === photoViewer) {
+            closePhotoViewer();
+        }
+    }
+);
+
+document.addEventListener(
+    "keydown",
+    (event) => {
+        if (
+            photoViewer.classList.contains(
+                "hidden"
+            )
+        ) {
+            return;
+        }
+
+        if (event.key === "Escape") {
+            closePhotoViewer();
+        }
+
+        if (event.key === "ArrowLeft") {
+            showPreviousPhoto();
+        }
+
+        if (event.key === "ArrowRight") {
+            showNextPhoto();
+        }
+    }
+);
 
 /* START APPLICATION */
 

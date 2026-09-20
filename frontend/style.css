@@ -412,3 +412,318 @@ body {
     font-size: 13px;
     margin-bottom: 0;
 }
+
+/* PHOTO UPLOAD */
+
+.photo-upload-status {
+    margin-top: 20px;
+    padding: 12px 14px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.photo-upload-status.success {
+    background-color: #e3f2e6;
+    color: #245c2d;
+}
+
+.photo-upload-status.error {
+    background-color: #f4dddd;
+    color: #8b1e1e;
+}
+
+/* PHOTO GALLERY */
+
+.photos-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.photo-item {
+    overflow: hidden;
+    border-radius: 12px;
+    background-color: #f3f3f3;
+}
+
+.photo-item img {
+    display: block;
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+}
+
+.photo-caption {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 14px;
+}
+
+.photo-message {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: #666;
+}
+
+
+/* CALENDAR PHOTO INDICATOR */
+
+.photo-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.photo-indicator-icon {
+    font-size: 13px;
+}
+
+
+/* SMALLER SCREENS */
+
+@media (max-width: 600px) {
+
+    .photos-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .photo-item img {
+        height: 160px;
+    }
+
+    .photo-indicator {
+        font-size: 10px;
+    }
+
+    .photo-indicator-icon {
+        font-size: 11px;
+    }
+}
+
+/* PHOTO GALLERY */
+
+.photos-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.photo-item {
+    overflow: hidden;
+    border-radius: 12px;
+    background-color: #f3f3f3;
+}
+
+.photo-item img {
+    display: block;
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+}
+
+.photo-caption {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 14px;
+}
+
+.photo-message {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: #666;
+}
+
+
+/* CALENDAR PHOTO INDICATOR */
+
+.photo-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.photo-indicator-icon {
+    font-size: 13px;
+}
+
+
+@media (max-width: 600px) {
+
+    .photos-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .photo-item img {
+        height: 160px;
+    }
+
+    .photo-indicator {
+        font-size: 10px;
+    }
+
+    .photo-indicator-icon {
+        font-size: 11px;
+    }
+}
+
+/* FULL-SCREEN PHOTO VIEWER */
+
+.photo-viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(0, 0, 0, 0.92);
+    padding: 40px 70px;
+}
+
+.photo-viewer.hidden {
+    display: none;
+}
+
+.photo-viewer-content {
+    max-width: 100%;
+    max-height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.photo-viewer-content img {
+    display: block;
+
+    max-width: 100%;
+    max-height: calc(100vh - 130px);
+
+    width: auto;
+    height: auto;
+
+    object-fit: contain;
+
+    border-radius: 4px;
+}
+
+.photo-viewer-close {
+    position: absolute;
+    top: 15px;
+    right: 22px;
+
+    border: none;
+    background: transparent;
+
+    color: white;
+    font-size: 42px;
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+.photo-viewer-arrow {
+    position: absolute;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    border: none;
+    background: rgba(0, 0, 0, 0.25);
+
+    color: white;
+
+    width: 50px;
+    height: 60px;
+
+    border-radius: 8px;
+
+    font-size: 32px;
+
+    cursor: pointer;
+}
+
+.photo-viewer-previous {
+    left: 15px;
+}
+
+.photo-viewer-next {
+    right: 15px;
+}
+
+.photo-viewer-caption {
+    margin: 12px 0 0;
+
+    color: white;
+    text-align: center;
+}
+
+.photo-viewer-counter {
+    margin: 8px 0 0;
+
+    color: #cccccc;
+    font-size: 13px;
+}
+
+.photo-item {
+    cursor: pointer;
+}
+
+.photo-item img {
+    transition: transform 0.15s ease;
+}
+
+.photo-item:hover img {
+    transform: scale(1.02);
+}
+
+
+@media (max-width: 600px) {
+
+    .photo-viewer {
+        padding: 55px 15px 70px;
+    }
+
+    .photo-viewer-content img {
+        max-height: calc(100vh - 150px);
+    }
+
+    .photo-viewer-arrow {
+        width: 42px;
+        height: 52px;
+
+        font-size: 26px;
+
+        background: rgba(0, 0, 0, 0.45);
+    }
+
+    .photo-viewer-previous {
+        left: 5px;
+    }
+
+    .photo-viewer-next {
+        right: 5px;
+    }
+
+    .photo-viewer-close {
+        top: 10px;
+        right: 15px;
+    }
+}

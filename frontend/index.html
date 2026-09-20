@@ -277,27 +277,39 @@
                 <div class="day-section">
 
                     <div class="section-heading">
+
                         <h3>Photos</h3>
+
+                        <button
+                            id="uploadPhotosButton"
+                            class="primary-button"
+                        >
+                            + Add Photos
+                        </button>
+
                     </div>
 
-                    <div class="photos-placeholder">
+                    <!-- Hidden native file picker -->
+                    <input
+                        type="file"
+                        id="photoInput"
+                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
+                        multiple
+                        hidden
+                    >
 
+                    <div
+                        id="photoUploadStatus"
+                        class="photo-upload-status hidden"
+                    ></div>
+
+                    <div
+                        id="photosContainer"
+                        class="photos-placeholder"
+                    >
                         <p>
                             No photos have been added yet.
                         </p>
-
-                        <button
-                            class="secondary-button"
-                            disabled
-                        >
-                            Upload Photos
-                        </button>
-
-                        <p class="coming-soon">
-                            Photo uploads will be added
-                            in a later phase.
-                        </p>
-
                     </div>
 
                 </div>
@@ -307,6 +319,58 @@
         </main>
 
     </div>
+
+    <!-- PHOTO VIEWER -->
+<div
+    id="photoViewer"
+    class="photo-viewer hidden"
+    aria-hidden="true"
+>
+    <button
+        id="closePhotoViewer"
+        class="photo-viewer-close"
+        type="button"
+        aria-label="Close photo"
+    >
+        &times;
+    </button>
+
+    <button
+        id="previousPhoto"
+        class="photo-viewer-arrow photo-viewer-previous"
+        type="button"
+        aria-label="Previous photo"
+    >
+        &#10094;
+    </button>
+
+    <div class="photo-viewer-content">
+        <img
+            id="photoViewerImage"
+            src=""
+            alt=""
+        >
+
+        <p
+            id="photoViewerCaption"
+            class="photo-viewer-caption"
+        ></p>
+
+        <p
+            id="photoViewerCounter"
+            class="photo-viewer-counter"
+        ></p>
+    </div>
+
+    <button
+        id="nextPhoto"
+        class="photo-viewer-arrow photo-viewer-next"
+        type="button"
+        aria-label="Next photo"
+    >
+        &#10095;
+    </button>
+</div>
 
     <script src="app.js"></script>
 
