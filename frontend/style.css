@@ -508,79 +508,6 @@ body {
     }
 }
 
-/* PHOTO GALLERY */
-
-.photos-grid {
-    display: grid;
-    grid-template-columns:
-        repeat(auto-fill, minmax(180px, 1fr));
-    gap: 16px;
-    margin-top: 20px;
-}
-
-.photo-item {
-    overflow: hidden;
-    border-radius: 12px;
-    background-color: #f3f3f3;
-}
-
-.photo-item img {
-    display: block;
-    width: 100%;
-    height: 220px;
-    object-fit: cover;
-}
-
-.photo-caption {
-    margin: 0;
-    padding: 10px 12px;
-    font-size: 14px;
-}
-
-.photo-message {
-    grid-column: 1 / -1;
-    margin: 0;
-    color: #666;
-}
-
-
-/* CALENDAR PHOTO INDICATOR */
-
-.photo-indicator {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 4px;
-    font-size: 12px;
-    line-height: 1.2;
-}
-
-.photo-indicator-icon {
-    font-size: 13px;
-}
-
-
-@media (max-width: 600px) {
-
-    .photos-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-        gap: 8px;
-    }
-
-    .photo-item img {
-        height: 160px;
-    }
-
-    .photo-indicator {
-        font-size: 10px;
-    }
-
-    .photo-indicator-icon {
-        font-size: 11px;
-    }
-}
-
 /* FULL-SCREEN PHOTO VIEWER */
 
 .photo-viewer {
@@ -895,5 +822,315 @@ body {
 
     .photo-archive-item img {
         height: 170px;
+    }
+}
+
+/* MOBILE APP LAYOUT */
+
+@media (max-width: 600px) {
+
+    /* MOBILE HEADER */
+
+    .site-header {
+        padding: 14px 12px;
+        gap: 10px;
+    }
+
+    .site-header h1 {
+        font-size: 20px;
+        white-space: nowrap;
+    }
+
+    .header-actions {
+        gap: 6px;
+    }
+
+    .header-actions .secondary-button {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+
+
+    /* MOBILE CALENDAR */
+
+    .calendar-container {
+        width: 100%;
+        margin: 12px 0;
+        padding: 12px 6px;
+        border-radius: 0;
+    }
+
+    .calendar-header {
+        margin-bottom: 12px;
+    }
+
+    .date-navigation {
+        gap: 6px;
+    }
+
+    .date-navigation h2 {
+        font-size: 21px;
+    }
+
+    #yearSelect {
+        font-size: 16px;
+        padding: 4px 5px;
+    }
+
+    .month-button {
+        font-size: 22px;
+        padding: 8px 10px;
+    }
+
+    .weekdays div {
+        padding: 8px 2px;
+        font-size: 12px;
+    }
+
+    .calendar-day {
+        min-height: 72px;
+        padding: 5px 3px;
+        overflow: hidden;
+    }
+
+    .day-number {
+        width: 25px;
+        height: 25px;
+        font-size: 13px;
+    }
+
+    .event-indicator {
+        justify-content: center;
+        margin-top: 5px;
+        padding: 3px;
+        font-size: 0;
+    }
+
+    .event-indicator-icon {
+        font-size: 12px;
+    }
+
+    .photo-indicator {
+        justify-content: center;
+        margin-top: 3px;
+        font-size: 0;
+    }
+
+     .photo-indicator-icon {
+        font-size: 12px;
+    }
+
+
+    /* MOBILE DAY VIEW */
+
+    .day-view {
+        width: 100%;
+        margin: 12px 0;
+        padding: 16px 12px;
+        border-radius: 0;
+    }
+
+    .back-button {
+        margin-bottom: 14px;
+        font-size: 14px;
+    }
+
+    .day-header {
+        padding-bottom: 16px;
+    }
+
+    .day-header h2 {
+        font-size: 25px;
+        line-height: 1.2;
+    }
+
+    .day-section {
+        padding: 20px 0;
+    }
+
+    .section-heading {
+        gap: 10px;
+    }
+
+    .section-heading h3 {
+        font-size: 21px;
+    }
+
+    .section-heading .primary-button {
+        padding: 9px 12px;
+        font-size: 14px;
+    }
+
+    .event-form {
+        padding: 15px;
+    }
+
+    .event-card {
+        padding: 14px;
+    }
+
+    .event-card-header {
+        gap: 10px;
+    }
+
+    .event-actions {
+        gap: 5px;
+    }
+
+    .edit-button,
+    .delete-button {
+        padding: 8px 10px;
+        font-size: 13px;
+    }
+
+    .event-detail {
+        overflow-wrap: anywhere;
+    }
+
+    .form-actions {
+        width: 100%;
+    }
+
+       .form-actions button {
+        flex: 1;
+    }
+
+
+    /* MOBILE PHOTOS */
+
+    .photos-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .photo-item {
+        border-radius: 8px;
+    }
+
+    .photo-item img {
+        height: 170px;
+    }
+
+    .photo-caption {
+        padding: 8px;
+        font-size: 13px;
+    }
+
+
+    /* MOBILE PHOTO ARCHIVE */
+
+    .photo-archive-view {
+        padding: 16px 12px 40px;
+    }
+
+    .photo-archive-header {
+        margin: 18px 0 24px;
+    }
+
+    .photo-archive-header h2 {
+        font-size: 25px;
+    }
+
+    .photo-archive-container {
+        gap: 28px;
+    }
+
+    .photo-archive-month h3 {
+        margin-bottom: 10px;
+        font-size: 18px;
+    }
+
+    .photo-archive-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .photo-archive-item {
+        border-radius: 8px;
+    }
+
+    .photo-archive-item img {
+        height: 170px;
+    }
+
+    .photo-archive-item-info {
+        padding: 8px;
+    }
+
+    .photo-archive-date {
+        font-size: 12px;
+    }
+
+       .photo-archive-caption {
+        font-size: 13px;
+    }
+
+
+    /* MOBILE PHOTO VIEWER */
+
+    .photo-viewer {
+        padding: 55px 45px 25px;
+        overflow-y: auto;
+    }
+
+    .photo-viewer-content {
+        width: 100%;
+        max-height: none;
+        justify-content: flex-start;
+    }
+
+    .photo-viewer-content img {
+        max-width: 100%;
+        max-height: 55vh;
+    }
+
+    .photo-viewer-close {
+        position: fixed;
+        top: 8px;
+        right: 12px;
+        font-size: 38px;
+        z-index: 2;
+    }
+
+    .photo-viewer-arrow {
+        position: fixed;
+        width: 38px;
+        height: 50px;
+        font-size: 24px;
+        z-index: 2;
+    }
+
+    .photo-viewer-previous {
+        left: 3px;
+    }
+
+    .photo-viewer-next {
+        right: 3px;
+    }
+
+    .photo-viewer-caption {
+        width: 100%;
+        overflow-wrap: anywhere;
+    }
+
+    .photo-caption-editor {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .photo-caption-input {
+        width: 100%;
+        min-height: 70px;
+    }
+
+    .photo-caption-save {
+        width: 100%;
+    }
+
+    .photo-viewer-delete {
+        width: 100%;
+        margin-bottom: 20px;
     }
 }
