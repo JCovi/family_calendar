@@ -71,14 +71,27 @@
 
         <header class="site-header">
 
-            <h1>Family Calendar</h1>
+         <h1>Family Calendar</h1>
 
-            <button
-                id="logoutButton"
-                class="secondary-button"
-            >
-                Log Out
-            </button>
+            <div class="header-actions">
+
+                <button
+                    id="photosButton"
+                     class="secondary-button"
+                     type="button"
+                 >
+                     Photos
+                 </button>
+
+                  <button
+                    id="logoutButton"
+                   class="secondary-button"
+                   type="button"
+                  >
+                      Log Out
+                  </button>
+
+            </div>
 
         </header>
 
@@ -312,6 +325,39 @@
                         </p>
                     </div>
 
+                </div>
+
+            </section>
+
+                        <!-- PHOTO ARCHIVE -->
+            <section
+                id="photoArchiveView"
+                class="photo-archive-view hidden"
+            >
+
+                <button
+                    id="backFromPhotos"
+                    class="back-button"
+                    type="button"
+                >
+                    &#10094; Back to Calendar
+                </button>
+
+                <div class="photo-archive-header">
+                    <h2>Family Photos</h2>
+
+                    <p>
+                        Browse your family's memories.
+                    </p>
+                </div>
+
+                <div
+                    id="photoArchiveContainer"
+                    class="photo-archive-container"
+                >
+                    <p class="photo-message">
+                        Loading photos...
+                    </p>
                 </div>
 
             </section>

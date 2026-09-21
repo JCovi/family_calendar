@@ -800,3 +800,100 @@ body {
     background: #ff6b6b;
     color: white;
 }
+
+/* HEADER ACTIONS */
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* PHOTO ARCHIVE */
+
+.photo-archive-view {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px 60px;
+}
+
+.photo-archive-header {
+    margin: 25px 0 30px;
+}
+
+.photo-archive-header h2 {
+    margin: 0 0 6px;
+}
+
+.photo-archive-header p {
+    margin: 0;
+    color: #666;
+}
+
+.photo-archive-container {
+    display: flex;
+    flex-direction: column;
+    gap: 35px;
+}
+
+.photo-archive-month h3 {
+    margin: 0 0 15px;
+    font-size: 20px;
+}
+
+.photo-archive-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.photo-archive-item {
+    overflow: hidden;
+    border-radius: 10px;
+    background: #f3f3f3;
+    cursor: pointer;
+}
+
+.photo-archive-item img {
+    display: block;
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    transition: transform 0.15s ease;
+}
+
+.photo-archive-item:hover img {
+    transform: scale(1.02);
+}
+
+.photo-archive-item-info {
+    padding: 10px 12px;
+}
+
+.photo-archive-date {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+}
+
+.photo-archive-caption {
+    margin: 5px 0 0;
+    font-size: 14px;
+}
+
+@media (max-width: 600px) {
+    .photo-archive-view {
+        padding: 20px 12px 40px;
+    }
+
+    .photo-archive-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .photo-archive-item img {
+        height: 170px;
+    }
+}

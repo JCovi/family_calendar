@@ -103,7 +103,7 @@ async function deleteFromR2(storageKey) {
 
 
 // ---------------------------------------------
-// GET PHOTOS BY DATE OR MONTH
+// GET PHOTOS BY DATE, MONTH, OR ALL
 // ---------------------------------------------
 
 router.get("/", async (req, res) => {
@@ -130,17 +130,12 @@ router.get("/", async (req, res) => {
             filter.date = {
                 $regex: `^${month}-`
             };
-        } else {
-            return res.status(400).json({
-                message:
-                    "A date or month is required."
-            });
         }
 
         const photos =
             await Photo.find(filter).sort({
-                date: 1,
-                _id: 1
+                date: -1,
+                _id: -1
             });
 
         const safePhotos =

@@ -134,6 +134,26 @@ const nextPhotoButton =
         "nextPhoto"
     );
 
+const photosButton =
+    document.getElementById(
+        "photosButton"
+    );
+
+const photoArchiveView =
+    document.getElementById(
+        "photoArchiveView"
+    );
+
+const backFromPhotosButton =
+    document.getElementById(
+        "backFromPhotos"
+    );
+
+const photoArchiveContainer =
+    document.getElementById(
+        "photoArchiveContainer"
+    );
+
 const deletePhotoButton =
     document.getElementById(
         "deletePhotoButton"
@@ -154,6 +174,7 @@ let selectedDate = null;
 let editingEventId = null;
 let currentPhotos = [];
 let currentPhotoIndex = 0;
+let photoViewerSource = "day";
 
 let calendarInitialized = false;
 
@@ -997,7 +1018,9 @@ function renderPhotos(photos) {
 
         photoItem.addEventListener(
             "click",
-            () => {
+              () => {
+                photoViewerSource = "day";
+
                  openPhotoViewer(index);
              }
         );
@@ -1611,25 +1634,43 @@ async function saveCurrentPhotoCaption() {
         photoViewerCaption.textContent =
             photo.caption || "";
 
-        await loadPhotosForDay();
+        if (photoViewerSource === "archive") {
+            await loadPhotoArchive();
 
-        /*
-         * loadPhotosForDay() rebuilds
-         * currentPhotos, so find this
-         * same photo again.
-         */
-        const updatedIndex =
-            currentPhotos.findIndex(
-                (item) =>
-                    item._id === photo._id
-            );
+            /*
+            * Keep the viewer's current
+            * photo data updated.
+            */
+            photo.caption =
+                data.photo.caption;
 
-        if (updatedIndex !== -1) {
-            currentPhotoIndex =
-                updatedIndex;
+            photoCaptionInput.value =
+                photo.caption || "";
+
+            photoViewerCaption.textContent =
+                photo.caption || "";
+
+        } else {
+            await loadPhotosForDay();
+
+            /*
+            * loadPhotosForDay() rebuilds
+            * currentPhotos, so find this
+            * same photo again.
+            */
+            const updatedIndex =
+                currentPhotos.findIndex(
+                    (item) =>
+                        item._id === photo._id
+                );
+
+            if (updatedIndex !== -1) {
+                currentPhotoIndex =
+                    updatedIndex;
+            }
+
+            updatePhotoViewer();
         }
-
-        updatePhotoViewer();
 
     } catch (error) {
         console.error(error);
@@ -1692,7 +1733,11 @@ async function deleteCurrentPhoto() {
 
         closePhotoViewer();
 
-        await loadPhotosForDay();
+        if (photoViewerSource === "archive") {
+            await loadPhotoArchive();
+        } else {
+            await loadPhotosForDay();
+        }
 
     } catch (error) {
         console.error(error);
@@ -1709,6 +1754,265 @@ async function deleteCurrentPhoto() {
             "Delete Photo";
     }
 }
+
+async function loadPhotoArchive() {
+    photoArchiveContainer.innerHTML = `
+        <p class="photo-message">
+            Loading photos...
+        </p>
+    `;
+
+    try {
+        const response = await fetch(
+            "/api/photos"
+        );
+
+        if (handleUnauthorized(response)) {
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                "Failed to load photo archive."
+            );
+        }
+
+        const photos =
+            await response.json();
+
+        renderPhotoArchive(photos);
+
+    } catch (error) {
+        console.error(error);
+
+        photoArchiveContainer.innerHTML = `
+            <p class="photo-message">
+                Could not load photos.
+            </p>
+        `;
+    }
+}
+
+function renderPhotoArchive(photos) {
+    photoArchiveContainer.innerHTML = "";
+
+    if (photos.length === 0) {
+        photoArchiveContainer.innerHTML = `
+            <p class="photo-message">
+                No photos have been added yet.
+            </p>
+        `;
+
+        return;
+    }
+
+    const groupedPhotos = {};
+
+    photos.forEach((photo) => {
+        const month =
+            photo.date.substring(0, 7);
+
+        if (!groupedPhotos[month]) {
+            groupedPhotos[month] = [];
+        }
+
+        groupedPhotos[month].push(photo);
+    });
+
+    Object.entries(groupedPhotos).forEach(
+        ([month, monthPhotos]) => {
+            const monthSection =
+                document.createElement("div");
+
+            monthSection.classList.add(
+                "photo-archive-month"
+            );
+
+            const heading =
+                document.createElement("h3");
+
+            const [year, monthNumber] =
+                month.split("-");
+
+            const monthDate =
+                new Date(
+                    Number(year),
+                    Number(monthNumber) - 1,
+                    1
+                );
+
+            heading.textContent =
+                monthDate.toLocaleDateString(
+                    "en-US",
+                    {
+                        month: "long",
+                        year: "numeric"
+                    }
+                );
+
+            monthSection.appendChild(
+                heading
+            );
+
+            const grid =
+                document.createElement("div");
+
+            grid.classList.add(
+                "photo-archive-grid"
+            );
+
+            monthPhotos.forEach(
+                (photo, index) => {
+                    const item =
+                        document.createElement(
+                            "div"
+                        );
+
+                    item.classList.add(
+                        "photo-archive-item"
+                    );
+
+                    const image =
+                        document.createElement(
+                            "img"
+                        );
+
+                    image.src =
+                        photo.imageUrl;
+
+                    image.alt =
+                        photo.caption ||
+                        photo.originalName ||
+                        "Family photo";
+
+                    image.loading = "lazy";
+
+                    item.appendChild(image);
+
+                    const info =
+                        document.createElement(
+                            "div"
+                        );
+
+                    info.classList.add(
+                        "photo-archive-item-info"
+                    );
+
+                    const date =
+                        document.createElement(
+                            "p"
+                        );
+
+                    date.classList.add(
+                        "photo-archive-date"
+                    );
+
+                    const [
+                        photoYear,
+                        photoMonth,
+                        photoDay
+                    ] = photo.date.split("-");
+
+                    const displayDate =
+                        new Date(
+                            Number(photoYear),
+                            Number(photoMonth) - 1,
+                            Number(photoDay)
+                        );
+
+                    date.textContent =
+                        displayDate.toLocaleDateString(
+                            "en-US",
+                            {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric"
+                            }
+                        );
+
+                    info.appendChild(date);
+
+                    if (photo.caption) {
+                        const caption =
+                            document.createElement(
+                                "p"
+                            );
+
+                        caption.classList.add(
+                            "photo-archive-caption"
+                        );
+
+                        caption.textContent =
+                            photo.caption;
+
+                        info.appendChild(
+                            caption
+                        );
+                    }
+
+                    item.appendChild(info);
+
+                    item.addEventListener(
+                        "click",
+                        () => {
+                            photoViewerSource =
+                                "archive";
+
+                            currentPhotos =
+                                monthPhotos;
+
+                            currentPhotoIndex =
+                                index;
+
+                            openPhotoViewer(
+                                index
+                            );
+                        }
+                    );
+
+                    grid.appendChild(item);
+                }
+            );
+
+            monthSection.appendChild(grid);
+
+            photoArchiveContainer.appendChild(
+                monthSection
+            );
+        }
+    );
+}
+
+async function openPhotoArchive() {
+    monthView.classList.add("hidden");
+    dayView.classList.add("hidden");
+
+    photoArchiveView.classList.remove(
+        "hidden"
+    );
+
+    await loadPhotoArchive();
+}
+
+function closePhotoArchive() {
+    photoArchiveView.classList.add(
+        "hidden"
+    );
+
+    monthView.classList.remove("hidden");
+
+    renderCalendar();
+}
+
+photosButton.addEventListener(
+    "click",
+    openPhotoArchive
+);
+
+backFromPhotosButton.addEventListener(
+    "click",
+    closePhotoArchive
+);
 
 /* PHOTO VIEWER CONTROLS */
 
