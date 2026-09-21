@@ -1,10 +1,31 @@
 require("dotenv").config();
 
+const requiredEnvVariables = [
+    "MONGODB_URI",
+    "SESSION_SECRET",
+    "FAMILY_PASSWORD_HASH",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+    "R2_ENDPOINT",
+    "R2_BUCKET_NAME"
+];
+
+for (const variable of requiredEnvVariables) {
+    if (!process.env[variable]) {
+        console.error(
+            `Missing required environment variable: ${variable}`
+        );
+
+        process.exit(1);
+    }
+}
+
 const mongoose = require("mongoose");
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
 const { MongoStore } = require("connect-mongo");
+const helmet = require("helmet");
 
 const eventRoutes = require("./routes/events");
 const photoRoutes = require("./routes/photos");
@@ -18,6 +39,9 @@ const PORT = process.env.PORT || 5000;
 
 // Needed when deployed behind Render's HTTPS proxy.
 app.set("trust proxy", 1);
+
+// SECURITY HEADERS
+app.use(helmet());
 
 // Parse JSON request bodies.
 app.use(express.json());
@@ -69,16 +93,18 @@ mongoose
     .connect(process.env.MONGODB_URI)
     .then(() => {
         console.log("Connected to MongoDB!");
+
+        app.listen(PORT, () => {
+            console.log(
+                `Server is running on port ${PORT}`
+            );
+        });
     })
     .catch((error) => {
         console.error(
             "MongoDB connection error:",
             error
         );
-    });
 
-app.listen(PORT, () => {
-    console.log(
-        `Server is running on port ${PORT}`
-    );
-});
+        process.exit(1);
+    });
