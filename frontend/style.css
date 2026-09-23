@@ -1624,11 +1624,10 @@ body {
 
     border-radius: 6px;
 
-    background:
-        var(--color-birthday-soft);
+    background: #f1d1d9;
+    border: 1px solid #e5b7c2;
 
-    color:
-        var(--color-birthday);
+    color: #a94f65;
 
     font-size: 0.72rem;
     font-weight: 600;
