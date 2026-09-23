@@ -79,6 +79,46 @@ const eventNotes =
 const eventsList =
     document.getElementById("eventsList");
 
+const addBirthdayButton =
+    document.getElementById(
+        "addBirthdayButton"
+    );
+
+const cancelBirthdayButton =
+    document.getElementById(
+        "cancelBirthdayButton"
+    );
+
+const birthdayForm =
+    document.getElementById(
+        "birthdayForm"
+    );
+
+const birthdayFormHeading =
+    document.getElementById(
+        "birthdayFormHeading"
+    );
+
+const saveBirthdayButton =
+    document.getElementById(
+        "saveBirthdayButton"
+    );
+
+const birthdayName =
+    document.getElementById(
+        "birthdayName"
+    );
+
+const birthdayNotes =
+    document.getElementById(
+        "birthdayNotes"
+    );
+
+const birthdaysList =
+    document.getElementById(
+        "birthdaysList"
+    );
+
 const uploadPhotosButton =
     document.getElementById(
         "uploadPhotosButton"
@@ -172,6 +212,7 @@ const savePhotoCaptionButton =
 let currentDate = new Date();
 let selectedDate = null;
 let editingEventId = null;
+let editingBirthdayId = null;
 let currentPhotos = [];
 let currentPhotoIndex = 0;
 let photoViewerSource = "day";
@@ -496,6 +537,64 @@ function openEditEventForm(event) {
     eventTitle.focus();
 }
 
+/* BIRTHDAY FORM */
+
+function resetBirthdayForm() {
+    editingBirthdayId = null;
+
+    birthdayForm.reset();
+
+    birthdayFormHeading.textContent =
+        "Add Birthday";
+
+    saveBirthdayButton.textContent =
+        "Save Birthday";
+
+    birthdayForm.classList.add("hidden");
+}
+
+
+function openAddBirthdayForm() {
+    editingBirthdayId = null;
+
+    birthdayForm.reset();
+
+    birthdayFormHeading.textContent =
+        "Add Birthday";
+
+    saveBirthdayButton.textContent =
+        "Save Birthday";
+
+    birthdayForm.classList.remove("hidden");
+
+    birthdayName.focus();
+}
+
+
+function openEditBirthdayForm(birthday) {
+    editingBirthdayId = birthday._id;
+
+    birthdayName.value =
+        birthday.name || "";
+
+    birthdayNotes.value =
+        birthday.notes || "";
+
+    birthdayFormHeading.textContent =
+        "Edit Birthday";
+
+    saveBirthdayButton.textContent =
+        "Save Changes";
+
+    birthdayForm.classList.remove("hidden");
+
+    birthdayForm.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+    });
+
+    birthdayName.focus();
+}
 
 /* AUTH FAILURE HANDLING */
 
@@ -507,6 +606,238 @@ function handleUnauthorized(response) {
     showLoginScreen();
 
     return true;
+}
+
+/* BIRTHDAY DATA */
+
+async function loadBirthdaysForDay() {
+    if (!selectedDate) {
+        return;
+    }
+
+    birthdaysList.innerHTML = `
+        <p class="empty-message">
+            Loading birthdays...
+        </p>
+    `;
+
+    const [
+        selectedYear,
+        selectedMonth,
+        selectedDay
+    ] = selectedDate
+        .split("-")
+        .map(Number);
+
+    try {
+        const response = await fetch(
+            `/api/birthdays?month=${selectedMonth}&day=${selectedDay}`
+        );
+
+        if (handleUnauthorized(response)) {
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                "Failed to load birthdays."
+            );
+        }
+
+        const birthdays =
+            await response.json();
+
+        renderBirthdays(birthdays);
+
+    } catch (error) {
+        console.error(error);
+
+        birthdaysList.innerHTML = `
+            <p class="empty-message">
+                Could not load birthdays.
+            </p>
+        `;
+    }
+}
+
+
+function renderBirthdays(birthdays) {
+    birthdaysList.innerHTML = "";
+
+    if (birthdays.length === 0) {
+        birthdaysList.innerHTML = `
+            <p class="empty-message">
+                No birthdays on this day.
+            </p>
+        `;
+
+        return;
+    }
+
+    birthdays.forEach((birthday) => {
+        const birthdayCard =
+            document.createElement("div");
+
+        birthdayCard.classList.add(
+            "event-card",
+            "birthday-card"
+        );
+
+
+        const cardHeader =
+            document.createElement("div");
+
+        cardHeader.classList.add(
+            "event-card-header"
+        );
+
+
+        const title =
+            document.createElement("h4");
+
+        title.textContent =
+            `🎂 ${birthday.name}`;
+
+
+        const actions =
+            document.createElement("div");
+
+        actions.classList.add(
+            "event-actions"
+        );
+
+
+        const editButton =
+            document.createElement("button");
+
+        editButton.type = "button";
+
+        editButton.classList.add(
+            "edit-button"
+        );
+
+        editButton.textContent = "Edit";
+
+        editButton.addEventListener(
+            "click",
+            () => {
+                openEditBirthdayForm(
+                    birthday
+                );
+            }
+        );
+
+
+        const deleteButton =
+            document.createElement("button");
+
+        deleteButton.type = "button";
+
+        deleteButton.classList.add(
+            "delete-button"
+        );
+
+        deleteButton.textContent =
+            "Delete";
+
+        deleteButton.addEventListener(
+            "click",
+            async () => {
+                await deleteBirthday(
+                    birthday
+                );
+            }
+        );
+
+
+        actions.appendChild(
+            editButton
+        );
+
+        actions.appendChild(
+            deleteButton
+        );
+
+        cardHeader.appendChild(
+            title
+        );
+
+        cardHeader.appendChild(
+            actions
+        );
+
+        birthdayCard.appendChild(
+            cardHeader
+        );
+
+
+        if (birthday.notes) {
+            const notes =
+                document.createElement("p");
+
+            notes.classList.add(
+                "event-detail"
+            );
+
+            notes.textContent =
+                `Notes: ${birthday.notes}`;
+
+            birthdayCard.appendChild(
+                notes
+            );
+        }
+
+
+        birthdaysList.appendChild(
+            birthdayCard
+        );
+    });
+}
+
+
+async function deleteBirthday(birthday) {
+    const confirmed = confirm(
+        `Delete ${birthday.name}'s birthday?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `/api/birthdays/${birthday._id}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        if (handleUnauthorized(response)) {
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                "Failed to delete birthday."
+            );
+        }
+
+        if (
+            editingBirthdayId ===
+            birthday._id
+        ) {
+            resetBirthdayForm();
+        }
+
+        await loadBirthdaysForDay();
+
+    } catch (error) {
+        console.error(error);
+
+        alert(
+            "The birthday could not be deleted."
+        );
+    }
 }
 
 
@@ -632,6 +963,99 @@ async function loadMonthEventIndicators() {
                 );
             }
         );
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+async function loadMonthBirthdayIndicators() {
+    const year =
+        currentDate.getFullYear();
+
+    const month =
+        currentDate.getMonth();
+
+    try {
+        const response = await fetch(
+            `/api/birthdays?month=${month + 1}`
+        );
+
+        if (handleUnauthorized(response)) {
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                "Failed to load month birthdays."
+            );
+        }
+
+        const birthdays =
+            await response.json();
+
+        const birthdayCounts = {};
+
+        birthdays.forEach((birthday) => {
+            if (!birthdayCounts[birthday.day]) {
+                birthdayCounts[birthday.day] = 0;
+            }
+
+            birthdayCounts[birthday.day]++;
+        });
+
+        Object.entries(birthdayCounts).forEach(
+            ([day, count]) => {
+                const dateString =
+                    formatDate(
+                        year,
+                        month,
+                        Number(day)
+                    );
+
+                const dayElement =
+                    calendarGrid.querySelector(
+                        `[data-date="${dateString}"]`
+                    );
+
+                if (!dayElement) {
+                    return;
+                }
+
+                const indicator =
+                    document.createElement("div");
+
+                indicator.classList.add(
+                    "birthday-indicator"
+                );
+
+                const icon =
+                    document.createElement("span");
+
+                icon.classList.add(
+                    "birthday-indicator-icon"
+                );
+
+                icon.textContent = "🎂";
+
+                const text =
+                    document.createElement("span");
+
+                text.textContent =
+                    `${count} ${
+                        count === 1
+                            ? "birthday"
+                            : "birthdays"
+                    }`;
+
+                indicator.appendChild(icon);
+                indicator.appendChild(text);
+
+                dayElement.appendChild(
+                    indicator
+                );
+            }
+        );
+
     } catch (error) {
         console.error(error);
     }
@@ -1149,6 +1573,7 @@ async function openDayView(dateString) {
         formatDayViewDate(dateString);
 
     resetEventForm();
+    resetBirthdayForm();
 
     photoUploadStatus.textContent = "";
     photoUploadStatus.className =
@@ -1158,9 +1583,11 @@ async function openDayView(dateString) {
     dayView.classList.remove("hidden");
 
     await Promise.all([
-        loadEventsForDay(),
-        loadPhotosForDay()
-    ]);
+    loadEventsForDay(),
+    loadBirthdaysForDay(),
+    loadPhotosForDay()
+]);
+
 }
 
 function closeDayView() {
@@ -1319,6 +1746,7 @@ function renderCalendar() {
     }
 
     loadMonthEventIndicators();
+    loadMonthBirthdayIndicators();
     loadMonthPhotoIndicators();
 }
 
@@ -1376,6 +1804,20 @@ cancelEventButton.addEventListener(
     "click",
     () => {
         resetEventForm();
+    }
+);
+
+addBirthdayButton.addEventListener(
+    "click",
+    () => {
+        openAddBirthdayForm();
+    }
+);
+
+cancelBirthdayButton.addEventListener(
+    "click",
+    () => {
+        resetBirthdayForm();
     }
 );
 
@@ -1463,6 +1905,109 @@ eventForm.addEventListener(
 
             alert(
                 "The event could not be saved."
+            );
+        }
+    }
+);
+
+/* CREATE / EDIT BIRTHDAY */
+
+birthdayForm.addEventListener(
+    "submit",
+    async (event) => {
+        event.preventDefault();
+
+        if (!selectedDate) {
+            return;
+        }
+
+        const [
+            selectedYear,
+            selectedMonth,
+            selectedDay
+        ] = selectedDate
+            .split("-")
+            .map(Number);
+
+        const birthdayData = {
+            name:
+                birthdayName.value.trim(),
+
+            month:
+                selectedMonth,
+
+            day:
+                selectedDay,
+
+            notes:
+                birthdayNotes.value.trim()
+        };
+
+        try {
+            let response;
+
+            if (editingBirthdayId) {
+                response = await fetch(
+                    `/api/birthdays/${editingBirthdayId}`,
+                    {
+                        method: "PUT",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(
+                                birthdayData
+                            )
+                    }
+                );
+            } else {
+                response = await fetch(
+                    "/api/birthdays",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(
+                                birthdayData
+                            )
+                    }
+                );
+            }
+
+            if (
+                handleUnauthorized(response)
+            ) {
+                return;
+            }
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    "Failed to save birthday."
+                );
+            }
+
+            resetBirthdayForm();
+
+            await loadBirthdaysForDay();
+
+        } catch (error) {
+            console.error(error);
+
+            alert(
+                error.message ||
+                "The birthday could not be saved."
             );
         }
     }

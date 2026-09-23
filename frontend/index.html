@@ -286,6 +286,102 @@
                 </div>
 
 
+                <!-- BIRTHDAYS -->
+                <div class="day-section birthday-section">
+
+                    <div class="section-heading">
+
+                        <h3>
+                            <span class="birthday-heading-icon">🎂</span>
+                            Birthdays
+                        </h3>
+
+                        <button
+                            id="addBirthdayButton"
+                            class="primary-button birthday-add-button"
+                            type="button"
+                        >
+                            + Add Birthday
+                        </button>
+
+                    </div>
+
+
+                    <!-- BIRTHDAY FORM -->
+                    <form
+                        id="birthdayForm"
+                        class="event-form birthday-form hidden"
+                    >
+
+                        <h4 id="birthdayFormHeading">
+                            Add Birthday
+                        </h4>
+
+                        <div class="form-group">
+
+                            <label for="birthdayName">
+                                Who's birthday is it?
+                            </label>
+
+                            <input
+                                type="text"
+                                id="birthdayName"
+                                required
+                                maxlength="100"
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="birthdayNotes">
+                                Notes
+                            </label>
+
+                            <textarea
+                                id="birthdayNotes"
+                                rows="4"
+                                maxlength="1000"
+                                placeholder="Optional"
+                            ></textarea>
+
+                        </div>
+
+                        <div class="form-actions">
+
+                            <button
+                                type="button"
+                                id="cancelBirthdayButton"
+                                class="secondary-button"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="submit"
+                                id="saveBirthdayButton"
+                                class="primary-button"
+                            >
+                                Save Birthday
+                            </button>
+
+                        </div>
+
+                    </form>
+
+
+                    <div
+                        id="birthdaysList"
+                        class="birthdays-list"
+                    >
+                        <p class="empty-message">
+                            No birthdays on this day.
+                        </p>
+                    </div>
+
+                </div>
+
+
                 <!-- PHOTOS -->
                 <div class="day-section">
 

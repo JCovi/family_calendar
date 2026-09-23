@@ -29,6 +29,7 @@ const helmet = require("helmet");
 
 const eventRoutes = require("./routes/events");
 const photoRoutes = require("./routes/photos");
+const birthdayRoutes = require("./routes/birthdays");
 const authRoutes = require("./routes/auth");
 
 const requireAuth = require("./middleware/auth");
@@ -81,6 +82,11 @@ app.use("/api/auth", authRoutes);
 // PROTECTED APIs
 app.use("/api/events", requireAuth, eventRoutes);
 app.use("/api/photos", requireAuth, photoRoutes);
+app.use(
+    "/api/birthdays",
+    requireAuth,
+    birthdayRoutes
+);
 
 // Serve the frontend.
 app.use(
