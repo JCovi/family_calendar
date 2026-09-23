@@ -220,6 +220,69 @@ let photoViewerSource = "day";
 let calendarInitialized = false;
 
 
+/* BROWSER NAVIGATION */
+
+function setBrowserView(view, data = {}) {
+    history.pushState(
+        {
+            view,
+            ...data
+        },
+        ""
+    );
+}
+
+
+function showCalendarFromHistory() {
+    selectedDate = null;
+
+    resetEventForm();
+    resetBirthdayForm();
+
+    dayView.classList.add("hidden");
+
+    photoArchiveView.classList.add(
+        "hidden"
+    );
+
+    monthView.classList.remove("hidden");
+
+    renderCalendar();
+}
+
+
+window.addEventListener(
+    "popstate",
+    async (event) => {
+        const state = event.state;
+
+        if (!state || state.view === "calendar") {
+            showCalendarFromHistory();
+            return;
+        }
+
+        if (
+            state.view === "day" &&
+            state.date
+        ) {
+            await openDayView(
+                state.date,
+                false
+            );
+
+            return;
+        }
+
+        if (state.view === "photos") {
+            await openPhotoArchive(false);
+            return;
+        }
+
+        showCalendarFromHistory();
+    }
+);
+
+
 /* AUTHENTICATION */
 
 function showLoginScreen() {
@@ -245,6 +308,13 @@ function showApplication() {
     if (!calendarInitialized) {
         buildYearSelector();
         calendarInitialized = true;
+
+        history.replaceState(
+            {
+                view: "calendar"
+            },
+            ""
+        );
     }
 
     renderCalendar();
@@ -1551,8 +1621,20 @@ async function loadMonthPhotoIndicators() {
 
 /* DAY VIEW */
 
-async function openDayView(dateString) {
+async function openDayView(
+    dateString,
+    addToHistory = true
+) {
     selectedDate = dateString;
+
+    if (addToHistory) {
+        setBrowserView(
+            "day",
+            {
+                date: dateString
+            }
+        );
+    }
 
     dayViewDate.textContent =
         formatDayViewDate(dateString);
@@ -1564,24 +1646,23 @@ async function openDayView(dateString) {
     photoUploadStatus.className =
         "photo-upload-status hidden";
 
+    photoArchiveView.classList.add(
+        "hidden"
+    );
+
     monthView.classList.add("hidden");
     dayView.classList.remove("hidden");
 
     await Promise.all([
-    loadEventsForDay(),
-    loadBirthdaysForDay(),
-    loadPhotosForDay()
-]);
-
+        loadEventsForDay(),
+        loadBirthdaysForDay(),
+        loadPhotosForDay()
+    ]);
 }
 
+
 function closeDayView() {
-    resetEventForm();
-
-    dayView.classList.add("hidden");
-    monthView.classList.remove("hidden");
-
-    renderCalendar();
+    history.back();
 }
 
 
@@ -2513,7 +2594,15 @@ function renderPhotoArchive(photos) {
     );
 }
 
-async function openPhotoArchive() {
+async function openPhotoArchive(
+    addToHistory = true
+) {
+    if (addToHistory) {
+        setBrowserView(
+            "photos"
+        );
+    }
+
     monthView.classList.add("hidden");
     dayView.classList.add("hidden");
 
@@ -2525,13 +2614,7 @@ async function openPhotoArchive() {
 }
 
 function closePhotoArchive() {
-    photoArchiveView.classList.add(
-        "hidden"
-    );
-
-    monthView.classList.remove("hidden");
-
-    renderCalendar();
+    history.back();
 }
 
 photosButton.addEventListener(
