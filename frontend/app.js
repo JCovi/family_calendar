@@ -948,12 +948,7 @@ async function loadMonthEventIndicators() {
                 const text =
                     document.createElement("span");
 
-                text.textContent =
-                    `${count} ${
-                        count === 1
-                            ? "event"
-                            : "events"
-                    }`;
+                text.textContent = count;
 
                 indicator.appendChild(icon);
                 indicator.appendChild(text);
@@ -1040,12 +1035,7 @@ async function loadMonthBirthdayIndicators() {
                 const text =
                     document.createElement("span");
 
-                text.textContent =
-                    `${count} ${
-                        count === 1
-                            ? "birthday"
-                            : "birthdays"
-                    }`;
+                text.textContent = count;
 
                 indicator.appendChild(icon);
                 indicator.appendChild(text);
@@ -1544,12 +1534,7 @@ async function loadMonthPhotoIndicators() {
                 const text =
                     document.createElement("span");
 
-                text.textContent =
-                    `${count} ${
-                        count === 1
-                            ? "photo"
-                            : "photos"
-                    }`;
+                text.textContent = count;
 
                 indicator.appendChild(icon);
                 indicator.appendChild(text);

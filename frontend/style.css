@@ -1638,3 +1638,12 @@ body {
 .birthday-indicator-icon {
     font-size: 0.9em;
 }
+
+/* Compact calendar indicators */
+
+.event-indicator,
+.photo-indicator,
+.birthday-indicator {
+    width: fit-content;
+    align-self: flex-start;
+}
