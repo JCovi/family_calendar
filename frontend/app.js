@@ -261,9 +261,9 @@ const familyBubblePointer = {
 };
 
 const FAMILY_BUBBLE_DRIFT_SPEED = 0.18;
-const FAMILY_BUBBLE_MAX_SPEED = 3.5;
+const FAMILY_BUBBLE_MAX_SPEED = 12;
 const FAMILY_BUBBLE_PUSH_RADIUS = 120;
-const FAMILY_BUBBLE_PUSH_STRENGTH = 0.012;
+const FAMILY_BUBBLE_PUSH_STRENGTH = 0.5;
 
 function randomBetween(min, max) {
     return (
