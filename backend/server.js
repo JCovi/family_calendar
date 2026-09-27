@@ -73,7 +73,7 @@ app.use(
             sameSite: "lax",
 
             // Stay logged in for 30 days.
-            maxAge: 1000 * 60 * 60 * 24 * 30
+            maxAge: 1000 * 60 * 60 * 24 * 3
         }
     })
 );
