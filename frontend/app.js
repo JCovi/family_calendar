@@ -226,6 +226,1131 @@ let photoViewerSource = "day";
 let calendarInitialized = false;
 
 
+/* FLOATING FAMILY BUBBLES */
+
+const familyBubblesLayer =
+    document.getElementById(
+        "familyBubblesLayer"
+    );
+
+const familyBubblePhotos = [
+    "amanda.png",
+    "cameron.png",
+    "dad.png",
+    "dane.png",
+    "ellah.png",
+    "jared.png",
+    "jolene.png",
+    "joshua.png",
+    "leila.png",
+    "mom.png",
+    "mylah.png",
+    "norah.png",
+    "randy.png",
+    "sara.png"
+];
+
+const familyBubbles = [];
+
+let familyBubbleAnimationFrame = null;
+
+const familyBubblePointer = {
+    x: 0,
+    y: 0,
+    active: false
+};
+
+const FAMILY_BUBBLE_DRIFT_SPEED = 0.18;
+const FAMILY_BUBBLE_MAX_SPEED = 3.5;
+const FAMILY_BUBBLE_PUSH_RADIUS = 120;
+const FAMILY_BUBBLE_PUSH_STRENGTH = 0.012;
+
+function randomBetween(min, max) {
+    return (
+        Math.random() *
+            (max - min) +
+        min
+    );
+}
+
+
+function createFamilyBubbles() {
+    if (
+        !familyBubblesLayer ||
+        familyBubbles.length > 0
+    ) {
+        return;
+    }
+
+    familyBubblePhotos.forEach(
+        (photo) => {
+
+            const bubbleElement =
+                document.createElement(
+                    "div"
+                );
+
+            bubbleElement.classList.add(
+                "family-bubble"
+            );
+
+            const image =
+                document.createElement(
+                    "img"
+                );
+
+            image.src =
+                `/api/family-bubbles/${photo}`;
+
+            image.alt = "";
+
+            bubbleElement.appendChild(
+                image
+            );
+
+            familyBubblesLayer.appendChild(
+                bubbleElement
+            );
+
+
+            const size = 64;
+
+            bubbleElement.style.width =
+                `${size}px`;
+
+            bubbleElement.style.height =
+                `${size}px`;
+
+
+            const maxX =
+                Math.max(
+                    0,
+                    window.innerWidth - size
+                );
+
+            const maxY =
+                Math.max(
+                    0,
+                    window.innerHeight - size
+                );
+
+
+            let x = 0;
+            let y = 0;
+
+            let validPosition = false;
+
+            const radius =
+                size / 2;
+
+
+            /*
+             * Try several random locations
+             * until this bubble does not
+             * overlap an existing one.
+             */
+
+            for (
+                let attempt = 0;
+                attempt < 100;
+                attempt++
+            ) {
+                const candidateX =
+                    randomBetween(
+                        0,
+                        maxX
+                    );
+
+                const candidateY =
+                    randomBetween(
+                        0,
+                        maxY
+                    );
+
+
+                const candidateCenterX =
+                    candidateX + radius;
+
+                const candidateCenterY =
+                    candidateY + radius;
+
+
+                const overlaps =
+                    familyBubbles.some(
+                        (otherBubble) => {
+
+                            const otherRadius =
+                                otherBubble.size /
+                                2;
+
+                            const otherCenterX =
+                                otherBubble.x +
+                                otherRadius;
+
+                            const otherCenterY =
+                                otherBubble.y +
+                                otherRadius;
+
+
+                            const distance =
+                                Math.hypot(
+                                    candidateCenterX -
+                                        otherCenterX,
+
+                                    candidateCenterY -
+                                        otherCenterY
+                                );
+
+
+                            return (
+                                distance <
+                                radius +
+                                    otherRadius +
+                                    1
+                            );
+                        }
+                    );
+
+
+                if (!overlaps) {
+                    x = candidateX;
+                    y = candidateY;
+
+                    validPosition = true;
+
+                    break;
+                }
+            }
+
+
+            /*
+             * Extremely small screens may
+             * not have enough free space.
+             * Collision physics will resolve
+             * the fallback position.
+             */
+
+            if (!validPosition) {
+                x =
+                    randomBetween(
+                        0,
+                        maxX
+                    );
+
+                y =
+                    randomBetween(
+                        0,
+                        maxY
+                    );
+            }
+
+
+            let velocityX =
+                randomBetween(
+                    -0.18,
+                    0.18
+                );
+
+            let velocityY =
+                randomBetween(
+                    -0.18,
+                    0.18
+                );
+
+
+            /*
+             * Make sure a bubble does not
+             * begin almost completely still.
+             */
+
+            if (
+                Math.abs(velocityX) < 0.06
+            ) {
+                velocityX =
+                    velocityX < 0
+                        ? -0.06
+                        : 0.06;
+            }
+
+            if (
+                Math.abs(velocityY) < 0.06
+            ) {
+                velocityY =
+                    velocityY < 0
+                        ? -0.06
+                        : 0.06;
+            }
+
+
+            const bubble = {
+                element:
+                    bubbleElement,
+
+                x,
+                y,
+
+                size,
+
+                velocityX,
+                velocityY,
+
+                dragging: false,
+                pointerId: null,
+
+                dragOffsetX: 0,
+                dragOffsetY: 0,
+
+                previousPointerX: 0,
+                previousPointerY: 0,
+                previousPointerTime: 0
+            };
+
+
+            familyBubbles.push(bubble);
+
+
+            addFamilyBubbleDragHandlers(
+                bubble
+            );
+        }
+    );
+
+    updateFamilyBubblePositions();
+}
+
+
+function updateFamilyBubblePositions() {
+    familyBubbles.forEach(
+        (bubble) => {
+
+            bubble.element.style.transform =
+                `translate3d(
+                    ${bubble.x}px,
+                    ${bubble.y}px,
+                    0
+                )`;
+        }
+    );
+}
+
+function limitFamilyBubbleSpeed(bubble) {
+    const speed =
+        Math.hypot(
+            bubble.velocityX,
+            bubble.velocityY
+        );
+
+    if (
+        speed <= FAMILY_BUBBLE_MAX_SPEED
+    ) {
+        return;
+    }
+
+    const scale =
+        FAMILY_BUBBLE_MAX_SPEED /
+        speed;
+
+    bubble.velocityX *= scale;
+    bubble.velocityY *= scale;
+}
+
+
+function applyFamilyBubblePointerPush() {
+    if (!familyBubblePointer.active) {
+        return;
+    }
+
+    familyBubbles.forEach(
+        (bubble) => {
+
+            if (bubble.dragging) {
+                return;
+            }
+
+
+            const centerX =
+                bubble.x +
+                bubble.size / 2;
+
+            const centerY =
+                bubble.y +
+                bubble.size / 2;
+
+
+            let deltaX =
+                centerX -
+                familyBubblePointer.x;
+
+            let deltaY =
+                centerY -
+                familyBubblePointer.y;
+
+
+            let distance =
+                Math.hypot(
+                    deltaX,
+                    deltaY
+                );
+
+
+            if (
+                distance >=
+                FAMILY_BUBBLE_PUSH_RADIUS
+            ) {
+                return;
+            }
+
+
+            if (distance < 1) {
+                deltaX =
+                    Math.random() - 0.5;
+
+                deltaY =
+                    Math.random() - 0.5;
+
+                distance =
+                    Math.hypot(
+                        deltaX,
+                        deltaY
+                    );
+            }
+
+
+            const normalX =
+                deltaX / distance;
+
+            const normalY =
+                deltaY / distance;
+
+
+            const strength =
+                (
+                    1 -
+                    distance /
+                    FAMILY_BUBBLE_PUSH_RADIUS
+                ) *
+                FAMILY_BUBBLE_PUSH_STRENGTH;
+
+
+            bubble.velocityX +=
+                normalX * strength;
+
+            bubble.velocityY +=
+                normalY * strength;
+
+
+            limitFamilyBubbleSpeed(
+                bubble
+            );
+        }
+    );
+}
+
+
+function addFamilyBubbleDragHandlers(
+    bubble
+) {
+    const element =
+        bubble.element;
+
+
+    element.addEventListener(
+        "pointerdown",
+        (event) => {
+            event.preventDefault();
+
+            bubble.dragging = true;
+
+            bubble.pointerId =
+                event.pointerId;
+
+
+            element.setPointerCapture(
+                event.pointerId
+            );
+
+
+            bubble.dragOffsetX =
+                event.clientX -
+                bubble.x;
+
+            bubble.dragOffsetY =
+                event.clientY -
+                bubble.y;
+
+
+            bubble.previousPointerX =
+                event.clientX;
+
+            bubble.previousPointerY =
+                event.clientY;
+
+            bubble.previousPointerTime =
+                performance.now();
+
+
+            bubble.velocityX = 0;
+            bubble.velocityY = 0;
+        }
+    );
+
+
+    element.addEventListener(
+        "pointermove",
+        (event) => {
+            if (
+                !bubble.dragging ||
+                event.pointerId !==
+                    bubble.pointerId
+            ) {
+                return;
+            }
+
+
+            const now =
+                performance.now();
+
+            const elapsed =
+                Math.max(
+                    1,
+                    now -
+                    bubble.previousPointerTime
+                );
+
+
+            const movementX =
+                event.clientX -
+                bubble.previousPointerX;
+
+            const movementY =
+                event.clientY -
+                bubble.previousPointerY;
+
+
+            /*
+             * Convert pointer movement into
+             * roughly frame-based velocity
+             * for throwing.
+             */
+
+            bubble.velocityX =
+                movementX /
+                elapsed *
+                16.67;
+
+            bubble.velocityY =
+                movementY /
+                elapsed *
+                16.67;
+
+
+            limitFamilyBubbleSpeed(
+                bubble
+            );
+
+
+            bubble.x =
+                event.clientX -
+                bubble.dragOffsetX;
+
+            bubble.y =
+                event.clientY -
+                bubble.dragOffsetY;
+
+
+            const maxX =
+                Math.max(
+                    0,
+                    window.innerWidth -
+                        bubble.size
+                );
+
+            const maxY =
+                Math.max(
+                    0,
+                    window.innerHeight -
+                        bubble.size
+                );
+
+
+            bubble.x =
+                Math.min(
+                    Math.max(
+                        bubble.x,
+                        0
+                    ),
+                    maxX
+                );
+
+            bubble.y =
+                Math.min(
+                    Math.max(
+                        bubble.y,
+                        0
+                    ),
+                    maxY
+                );
+
+
+            bubble.previousPointerX =
+                event.clientX;
+
+            bubble.previousPointerY =
+                event.clientY;
+
+            bubble.previousPointerTime =
+                now;
+
+
+            updateFamilyBubblePositions();
+        }
+    );
+
+
+    const releaseBubble =
+        (event) => {
+            if (
+                !bubble.dragging ||
+                event.pointerId !==
+                    bubble.pointerId
+            ) {
+                return;
+            }
+
+
+            bubble.dragging = false;
+
+            bubble.pointerId = null;
+
+
+            limitFamilyBubbleSpeed(
+                bubble
+            );
+
+
+            if (
+                element.hasPointerCapture(
+                    event.pointerId
+                )
+            ) {
+                element.releasePointerCapture(
+                    event.pointerId
+                );
+            }
+        };
+
+
+    element.addEventListener(
+        "pointerup",
+        releaseBubble
+    );
+
+    element.addEventListener(
+        "pointercancel",
+        releaseBubble
+    );
+}
+
+function resolveFamilyBubbleCollisions() {
+    for (
+        let i = 0;
+        i < familyBubbles.length;
+        i++
+    ) {
+        for (
+            let j = i + 1;
+            j < familyBubbles.length;
+            j++
+        ) {
+            const bubbleA =
+                familyBubbles[i];
+
+            const bubbleB =
+                familyBubbles[j];
+
+
+            const radiusA =
+                bubbleA.size / 2;
+
+            const radiusB =
+                bubbleB.size / 2;
+
+
+            const centerAX =
+                bubbleA.x + radiusA;
+
+            const centerAY =
+                bubbleA.y + radiusA;
+
+            const centerBX =
+                bubbleB.x + radiusB;
+
+            const centerBY =
+                bubbleB.y + radiusB;
+
+
+            let deltaX =
+                centerBX - centerAX;
+
+            let deltaY =
+                centerBY - centerAY;
+
+
+            let distance =
+                Math.hypot(
+                    deltaX,
+                    deltaY
+                );
+
+
+            const minimumDistance =
+                radiusA + radiusB;
+
+
+            if (
+                distance >= minimumDistance
+            ) {
+                continue;
+            }
+
+
+            /*
+             * If two bubbles somehow begin
+             * at the exact same coordinates,
+             * give the collision a direction.
+             */
+
+            if (distance === 0) {
+                deltaX = 1;
+                deltaY = 0;
+                distance = 1;
+            }
+
+
+            const normalX =
+                deltaX / distance;
+
+            const normalY =
+                deltaY / distance;
+
+
+            /*
+             * Separate overlapping bubbles
+             * before changing their velocity.
+             */
+
+            const overlap =
+                minimumDistance - distance;
+
+            const separation =
+                overlap / 2;
+
+
+            bubbleA.x -=
+                normalX * separation;
+
+            bubbleA.y -=
+                normalY * separation;
+
+            bubbleB.x +=
+                normalX * separation;
+
+            bubbleB.y +=
+                normalY * separation;
+
+
+            /*
+             * Determine how quickly the two
+             * bubbles are moving toward
+             * one another.
+             */
+
+            const relativeVelocityX =
+                bubbleB.velocityX -
+                bubbleA.velocityX;
+
+            const relativeVelocityY =
+                bubbleB.velocityY -
+                bubbleA.velocityY;
+
+
+            const velocityAlongNormal =
+                relativeVelocityX *
+                    normalX +
+                relativeVelocityY *
+                    normalY;
+
+
+            /*
+             * If they're already moving
+             * apart, separation alone is
+             * enough.
+             */
+
+            if (
+                velocityAlongNormal >= 0
+            ) {
+                continue;
+            }
+
+
+            /*
+             * Equal-mass elastic collision.
+             *
+             * Since every bubble is the same
+             * size, treating them as equal
+             * mass gives a natural-looking
+             * bounce.
+             */
+
+            const impulse =
+                -velocityAlongNormal;
+
+
+            const impulseX =
+                impulse * normalX;
+
+            const impulseY =
+                impulse * normalY;
+
+
+            bubbleA.velocityX -=
+                impulseX;
+
+            bubbleA.velocityY -=
+                impulseY;
+
+            bubbleB.velocityX +=
+                impulseX;
+
+            bubbleB.velocityY +=
+                impulseY;
+        }
+    }
+}
+
+function animateFamilyBubbles() {
+    if (
+        familyBubblesLayer.classList.contains(
+            "hidden"
+        )
+    ) {
+        familyBubbleAnimationFrame = null;
+        return;
+    }
+
+
+    applyFamilyBubblePointerPush();
+
+
+    familyBubbles.forEach(
+        (bubble) => {
+
+            if (bubble.dragging) {
+                return;
+            }
+
+
+            /*
+             * Gradually return very slow
+             * bubbles toward a gentle drift.
+             */
+
+            const speed =
+                Math.hypot(
+                    bubble.velocityX,
+                    bubble.velocityY
+                );
+
+
+            if (
+                speed <
+                FAMILY_BUBBLE_DRIFT_SPEED
+            ) {
+                const direction =
+                    Math.atan2(
+                        bubble.velocityY,
+                        bubble.velocityX
+                    );
+
+                bubble.velocityX =
+                    Math.cos(direction) *
+                    FAMILY_BUBBLE_DRIFT_SPEED;
+
+                bubble.velocityY =
+                    Math.sin(direction) *
+                    FAMILY_BUBBLE_DRIFT_SPEED;
+            }
+
+
+            /*
+             * Gentle resistance means thrown
+             * bubbles gradually slow down.
+             */
+
+            if (
+                speed >
+                FAMILY_BUBBLE_DRIFT_SPEED
+            ) {
+                bubble.velocityX *=
+                    0.995;
+
+                bubble.velocityY *=
+                    0.995;
+            }
+
+
+            limitFamilyBubbleSpeed(
+                bubble
+            );
+
+
+            bubble.x +=
+                bubble.velocityX;
+
+            bubble.y +=
+                bubble.velocityY;
+
+
+            const maxX =
+                Math.max(
+                    0,
+                    window.innerWidth -
+                        bubble.size
+                );
+
+            const maxY =
+                Math.max(
+                    0,
+                    window.innerHeight -
+                        bubble.size
+                );
+
+
+            if (bubble.x <= 0) {
+                bubble.x = 0;
+
+                bubble.velocityX =
+                    Math.abs(
+                        bubble.velocityX
+                    );
+            }
+
+
+            if (bubble.x >= maxX) {
+                bubble.x = maxX;
+
+                bubble.velocityX =
+                    -Math.abs(
+                        bubble.velocityX
+                    );
+            }
+
+
+            if (bubble.y <= 0) {
+                bubble.y = 0;
+
+                bubble.velocityY =
+                    Math.abs(
+                        bubble.velocityY
+                    );
+            }
+
+
+            if (bubble.y >= maxY) {
+                bubble.y = maxY;
+
+                bubble.velocityY =
+                    -Math.abs(
+                        bubble.velocityY
+                    );
+            }
+        }
+    );
+
+
+    resolveFamilyBubbleCollisions();
+
+
+    /*
+     * Collisions can move bubbles slightly
+     * beyond an edge, so clamp them again.
+     */
+
+    familyBubbles.forEach(
+        (bubble) => {
+
+            const maxX =
+                Math.max(
+                    0,
+                    window.innerWidth -
+                        bubble.size
+                );
+
+            const maxY =
+                Math.max(
+                    0,
+                    window.innerHeight -
+                        bubble.size
+                );
+
+
+            bubble.x =
+                Math.min(
+                    Math.max(
+                        bubble.x,
+                        0
+                    ),
+                    maxX
+                );
+
+            bubble.y =
+                Math.min(
+                    Math.max(
+                        bubble.y,
+                        0
+                    ),
+                    maxY
+                );
+        }
+    );
+
+
+    updateFamilyBubblePositions();
+
+
+    familyBubbleAnimationFrame =
+        requestAnimationFrame(
+            animateFamilyBubbles
+        );
+}
+
+
+function showFamilyBubbles() {
+    if (!familyBubblesLayer) {
+        return;
+    }
+
+    createFamilyBubbles();
+
+    familyBubblesLayer.classList.remove(
+        "hidden"
+    );
+
+    if (
+        familyBubbleAnimationFrame === null
+    ) {
+        familyBubbleAnimationFrame =
+            requestAnimationFrame(
+                animateFamilyBubbles
+            );
+    }
+}
+
+
+function hideFamilyBubbles() {
+    if (!familyBubblesLayer) {
+        return;
+    }
+
+    familyBubblesLayer.classList.add(
+        "hidden"
+    );
+
+    if (
+        familyBubbleAnimationFrame !== null
+    ) {
+        cancelAnimationFrame(
+            familyBubbleAnimationFrame
+        );
+
+        familyBubbleAnimationFrame = null;
+    }
+}
+
+window.addEventListener(
+    "pointermove",
+    (event) => {
+
+        /*
+         * Mouse and stylus can push bubbles
+         * simply by moving near them.
+         *
+         * Touch is excluded here because a
+         * finger has no hover state.
+         */
+
+        if (
+            event.pointerType === "touch"
+        ) {
+            return;
+        }
+
+        familyBubblePointer.x =
+            event.clientX;
+
+        familyBubblePointer.y =
+            event.clientY;
+
+        familyBubblePointer.active =
+            true;
+    }
+);
+
+
+window.addEventListener(
+    "pointerleave",
+    () => {
+        familyBubblePointer.active =
+            false;
+    }
+);
+
+window.addEventListener(
+    "resize",
+    () => {
+        familyBubbles.forEach(
+            (bubble) => {
+
+                const maxX =
+                    Math.max(
+                        0,
+                        window.innerWidth -
+                            bubble.size
+                    );
+
+                const maxY =
+                    Math.max(
+                        0,
+                        window.innerHeight -
+                            bubble.size
+                    );
+
+                bubble.x =
+                    Math.min(
+                        Math.max(
+                            bubble.x,
+                            0
+                        ),
+                        maxX
+                    );
+
+                bubble.y =
+                    Math.min(
+                        Math.max(
+                            bubble.y,
+                            0
+                        ),
+                        maxY
+                    );
+            }
+        );
+
+        updateFamilyBubblePositions();
+    }
+);
+
+
 /* BROWSER NAVIGATION */
 
 function setBrowserView(view, data = {}) {
@@ -254,6 +1379,8 @@ function showCalendarFromHistory() {
     monthView.classList.remove("hidden");
 
     renderCalendar();
+
+    showFamilyBubbles();
 }
 
 
@@ -292,6 +1419,8 @@ window.addEventListener(
 /* AUTHENTICATION */
 
 function showLoginScreen() {
+    hideFamilyBubbles();
+
     loadingScreen.classList.add("hidden");
     appContainer.classList.add("hidden");
 
@@ -323,7 +1452,9 @@ function showApplication() {
         );
     }
 
-    renderCalendar();
+        renderCalendar();
+
+    showFamilyBubbles();
 }
 
 async function checkAuthentication() {
@@ -1719,6 +2850,8 @@ async function openDayView(
     monthView.classList.add("hidden");
     dayView.classList.remove("hidden");
 
+    hideFamilyBubbles();
+
     await Promise.all([
         loadEventsForDay(),
         loadBirthdaysForDay(),
@@ -2686,6 +3819,8 @@ async function openPhotoArchive(
 
     monthView.classList.add("hidden");
     dayView.classList.add("hidden");
+
+    hideFamilyBubbles();
 
     photoArchiveView.classList.remove(
         "hidden"

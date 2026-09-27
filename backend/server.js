@@ -30,6 +30,8 @@ const helmet = require("helmet");
 const eventRoutes = require("./routes/events");
 const photoRoutes = require("./routes/photos");
 const birthdayRoutes = require("./routes/birthdays");
+const familybubbleRoutes =
+    require("./routes/familybubbles");
 const authRoutes = require("./routes/auth");
 
 const requireAuth = require("./middleware/auth");
@@ -86,6 +88,12 @@ app.use(
     "/api/birthdays",
     requireAuth,
     birthdayRoutes
+);
+
+app.use(
+    "/api/family-bubbles",
+    requireAuth,
+    familybubbleRoutes
 );
 
 // Serve the frontend.
