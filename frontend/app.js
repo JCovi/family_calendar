@@ -49,6 +49,12 @@ const backToCalendarButton =
 const dayViewDate =
     document.getElementById("dayViewDate");
 
+const previousDayButton =
+    document.getElementById("previousDay");
+
+const nextDayButton =
+    document.getElementById("nextDay");
+
 const addEventButton =
     document.getElementById("addEventButton");
 
@@ -1621,11 +1627,69 @@ async function loadMonthPhotoIndicators() {
 
 /* DAY VIEW */
 
+async function changeSelectedDay(amount) {
+    if (!selectedDate) {
+        return;
+    }
+
+    const [year, month, day] =
+        selectedDate
+            .split("-")
+            .map(Number);
+
+    const newDate =
+        new Date(
+            year,
+            month - 1,
+            day
+        );
+
+    newDate.setDate(
+        newDate.getDate() + amount
+    );
+
+    const newDateString =
+        formatDate(
+            newDate.getFullYear(),
+            newDate.getMonth(),
+            newDate.getDate()
+        );
+
+    history.replaceState(
+        {
+            view: "day",
+            date: newDateString
+        },
+        ""
+    );
+
+    await openDayView(
+        newDateString,
+        false,
+        true
+    );
+}
+
 async function openDayView(
     dateString,
-    addToHistory = true
+    addToHistory = true,
+    preserveForms = false
 ) {
     selectedDate = dateString;
+
+    const [
+        selectedYear,
+        selectedMonth
+    ] = dateString
+        .split("-")
+        .map(Number);
+
+    currentDate =
+        new Date(
+            selectedYear,
+            selectedMonth - 1,
+            1
+        );
 
     if (addToHistory) {
         setBrowserView(
@@ -1639,8 +1703,10 @@ async function openDayView(
     dayViewDate.textContent =
         formatDayViewDate(dateString);
 
-    resetEventForm();
-    resetBirthdayForm();
+    if (!preserveForms) {
+        resetEventForm();
+        resetBirthdayForm();
+    }
 
     photoUploadStatus.textContent = "";
     photoUploadStatus.className =
@@ -1818,6 +1884,21 @@ function renderCalendar() {
 
 
 /* CALENDAR CONTROLS */
+
+previousDayButton.addEventListener(
+    "click",
+    async () => {
+        await changeSelectedDay(-1);
+    }
+);
+
+
+nextDayButton.addEventListener(
+    "click",
+    async () => {
+        await changeSelectedDay(1);
+    }
+);
 
 previousMonthButton.addEventListener(
     "click",
