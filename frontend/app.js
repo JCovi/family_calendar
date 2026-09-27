@@ -313,7 +313,10 @@ function createFamilyBubbles() {
             );
 
 
-            const size = 64;
+            const size =
+                window.innerWidth <= 600
+                    ? 48
+                    : 64;
 
             bubbleElement.style.width =
                 `${size}px`;
