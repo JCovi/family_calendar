@@ -185,6 +185,48 @@ const photosButton =
         "photosButton"
     );
 
+    const gameButton =
+    document.getElementById(
+        "gameButton"
+    );
+
+const gameView =
+    document.getElementById(
+        "gameView"
+    );
+
+const exitGameButton =
+    document.getElementById(
+        "exitGameButton"
+    );
+
+const poolTable =
+    document.getElementById(
+        "poolTable"
+    );
+
+const familyPoolWinPopup =
+    document.getElementById(
+        "familyPoolWinPopup"
+    );
+
+const poolPlayingSurface =
+    document.getElementById(
+        "poolPlayingSurface"
+    );
+
+const poolBallsLayer =
+    document.getElementById(
+        "poolBallsLayer"
+    );
+
+const poolPockets =
+    Array.from(
+        document.querySelectorAll(
+            ".pool-pocket"
+        )
+    );
+
 const photoArchiveView =
     document.getElementById(
         "photoArchiveView"
@@ -253,6 +295,20 @@ const familyBubblePhotos = [
 const familyBubbles = [];
 
 let familyBubbleAnimationFrame = null;
+
+let familyBubbleMode = "calendar";
+
+let familyPoolBreaker = null;
+
+let familyPoolAnimationFrame = null;
+
+let familyPoolGameWon = false;
+
+const FAMILY_POOL_MAX_SPEED = 22;
+const FAMILY_POOL_FRICTION = 0.985;
+const FAMILY_POOL_STOP_SPEED = 0.035;
+const FAMILY_POOL_RAIL_BOUNCE = 0.88;
+const FAMILY_POOL_COLLISION_BOUNCE = 0.96;
 
 const familyBubblePointer = {
     x: 0,
@@ -505,7 +561,9 @@ function createFamilyBubbles() {
 
                 previousPointerX: 0,
                 previousPointerY: 0,
-                previousPointerTime: 0
+                previousPointerTime: 0,
+
+                pocketed: false
             };
 
 
@@ -534,6 +592,33 @@ function updateFamilyBubblePositions() {
                 )`;
         }
     );
+}
+
+function limitFamilyPoolBallSpeed(
+    bubble
+) {
+    const speed =
+        Math.hypot(
+            bubble.velocityX,
+            bubble.velocityY
+        );
+
+
+    if (
+        speed <=
+        FAMILY_POOL_MAX_SPEED
+    ) {
+        return;
+    }
+
+
+    const scale =
+        FAMILY_POOL_MAX_SPEED /
+        speed;
+
+
+    bubble.velocityX *= scale;
+    bubble.velocityY *= scale;
 }
 
 function limitFamilyBubbleSpeed(bubble) {
@@ -662,6 +747,7 @@ function addFamilyBubbleDragHandlers(
         (event) => {
             event.preventDefault();
 
+
             bubble.dragging = true;
 
             bubble.pointerId =
@@ -673,13 +759,44 @@ function addFamilyBubbleDragHandlers(
             );
 
 
-            bubble.dragOffsetX =
-                event.clientX -
-                bubble.x;
+            /*
+             * Grabbing a moving bubble
+             * immediately stops its existing
+             * motion.
+             */
 
-            bubble.dragOffsetY =
-                event.clientY -
-                bubble.y;
+            bubble.velocityX = 0;
+            bubble.velocityY = 0;
+
+
+            if (
+                familyBubbleMode === "game"
+            ) {
+                const surfaceRect =
+                    poolPlayingSurface
+                        .getBoundingClientRect();
+
+
+                bubble.dragOffsetX =
+                    event.clientX -
+                    surfaceRect.left -
+                    bubble.x;
+
+                bubble.dragOffsetY =
+                    event.clientY -
+                    surfaceRect.top -
+                    bubble.y;
+
+            } else {
+
+                bubble.dragOffsetX =
+                    event.clientX -
+                    bubble.x;
+
+                bubble.dragOffsetY =
+                    event.clientY -
+                    bubble.y;
+            }
 
 
             bubble.previousPointerX =
@@ -690,10 +807,6 @@ function addFamilyBubbleDragHandlers(
 
             bubble.previousPointerTime =
                 performance.now();
-
-
-            bubble.velocityX = 0;
-            bubble.velocityY = 0;
         }
     );
 
@@ -701,6 +814,7 @@ function addFamilyBubbleDragHandlers(
     element.addEventListener(
         "pointermove",
         (event) => {
+
             if (
                 !bubble.dragging ||
                 event.pointerId !==
@@ -713,11 +827,13 @@ function addFamilyBubbleDragHandlers(
             const now =
                 performance.now();
 
+
             const elapsed =
                 Math.max(
                     1,
                     now -
-                    bubble.previousPointerTime
+                        bubble
+                            .previousPointerTime
                 );
 
 
@@ -732,8 +848,7 @@ function addFamilyBubbleDragHandlers(
 
             /*
              * Convert pointer movement into
-             * roughly frame-based velocity
-             * for throwing.
+             * frame-based throw velocity.
              */
 
             bubble.velocityX =
@@ -747,52 +862,114 @@ function addFamilyBubbleDragHandlers(
                 16.67;
 
 
-            limitFamilyBubbleSpeed(
-                bubble
-            );
-
-
-            bubble.x =
-                event.clientX -
-                bubble.dragOffsetX;
-
-            bubble.y =
-                event.clientY -
-                bubble.dragOffsetY;
-
-
-            const maxX =
-                Math.max(
-                    0,
-                    window.innerWidth -
-                        bubble.size
-                );
-
-            const maxY =
-                Math.max(
-                    0,
-                    window.innerHeight -
-                        bubble.size
+            if (
+                familyBubbleMode === "game"
+            ) {
+                limitFamilyPoolBallSpeed(
+                    bubble
                 );
 
 
-            bubble.x =
-                Math.min(
+                const surfaceRect =
+                    poolPlayingSurface
+                        .getBoundingClientRect();
+
+
+                bubble.x =
+                    event.clientX -
+                    surfaceRect.left -
+                    bubble.dragOffsetX;
+
+                bubble.y =
+                    event.clientY -
+                    surfaceRect.top -
+                    bubble.dragOffsetY;
+
+
+                const maxX =
                     Math.max(
-                        bubble.x,
-                        0
-                    ),
-                    maxX
+                        0,
+                        poolPlayingSurface
+                            .clientWidth -
+                            bubble.size
+                    );
+
+                const maxY =
+                    Math.max(
+                        0,
+                        poolPlayingSurface
+                            .clientHeight -
+                            bubble.size
+                    );
+
+
+                bubble.x =
+                    Math.min(
+                        Math.max(
+                            bubble.x,
+                            0
+                        ),
+                        maxX
+                    );
+
+                bubble.y =
+                    Math.min(
+                        Math.max(
+                            bubble.y,
+                            0
+                        ),
+                        maxY
+                    );
+
+            } else {
+
+                limitFamilyBubbleSpeed(
+                    bubble
                 );
 
-            bubble.y =
-                Math.min(
+
+                bubble.x =
+                    event.clientX -
+                    bubble.dragOffsetX;
+
+                bubble.y =
+                    event.clientY -
+                    bubble.dragOffsetY;
+
+
+                const maxX =
                     Math.max(
-                        bubble.y,
-                        0
-                    ),
-                    maxY
-                );
+                        0,
+                        window.innerWidth -
+                            bubble.size
+                    );
+
+                const maxY =
+                    Math.max(
+                        0,
+                        window.innerHeight -
+                            bubble.size
+                    );
+
+
+                bubble.x =
+                    Math.min(
+                        Math.max(
+                            bubble.x,
+                            0
+                        ),
+                        maxX
+                    );
+
+                bubble.y =
+                    Math.min(
+                        Math.max(
+                            bubble.y,
+                            0
+                        ),
+                        maxY
+                    );
+            }
 
 
             bubble.previousPointerX =
@@ -812,6 +989,7 @@ function addFamilyBubbleDragHandlers(
 
     const releaseBubble =
         (event) => {
+
             if (
                 !bubble.dragging ||
                 event.pointerId !==
@@ -822,13 +1000,20 @@ function addFamilyBubbleDragHandlers(
 
 
             bubble.dragging = false;
-
             bubble.pointerId = null;
 
 
-            limitFamilyBubbleSpeed(
-                bubble
-            );
+            if (
+                familyBubbleMode === "game"
+            ) {
+                limitFamilyPoolBallSpeed(
+                    bubble
+                );
+            } else {
+                limitFamilyBubbleSpeed(
+                    bubble
+                );
+            }
 
 
             if (
@@ -848,12 +1033,21 @@ function addFamilyBubbleDragHandlers(
         releaseBubble
     );
 
+
     element.addEventListener(
-        "pointercancel",
-        releaseBubble
-    );
+    "pointercancel",
+    releaseBubble
+);
 }
 
+
+/*
+ * Resolve collisions between the floating
+ * Calendar family bubbles.
+ *
+ * This is intentionally separate from
+ * Family Pool collision physics.
+ */
 function resolveFamilyBubbleCollisions() {
     for (
         let i = 0;
@@ -911,18 +1105,18 @@ function resolveFamilyBubbleCollisions() {
 
 
             if (
-                distance >= minimumDistance
+                distance >=
+                minimumDistance
             ) {
                 continue;
             }
 
 
             /*
-             * If two bubbles somehow begin
-             * at the exact same coordinates,
-             * give the collision a direction.
+             * Avoid dividing by zero if two
+             * bubbles somehow have exactly
+             * the same center point.
              */
-
             if (distance === 0) {
                 deltaX = 1;
                 deltaY = 0;
@@ -939,35 +1133,44 @@ function resolveFamilyBubbleCollisions() {
 
             /*
              * Separate overlapping bubbles
-             * before changing their velocity.
+             * so they cannot remain stuck
+             * inside one another.
              */
-
             const overlap =
-                minimumDistance - distance;
+                minimumDistance -
+                distance;
 
             const separation =
                 overlap / 2;
 
 
-            bubbleA.x -=
-                normalX * separation;
+            if (!bubbleA.dragging) {
+                bubbleA.x -=
+                    normalX *
+                    separation;
 
-            bubbleA.y -=
-                normalY * separation;
+                bubbleA.y -=
+                    normalY *
+                    separation;
+            }
 
-            bubbleB.x +=
-                normalX * separation;
 
-            bubbleB.y +=
-                normalY * separation;
+            if (!bubbleB.dragging) {
+                bubbleB.x +=
+                    normalX *
+                    separation;
+
+                bubbleB.y +=
+                    normalY *
+                    separation;
+            }
 
 
             /*
-             * Determine how quickly the two
+             * Determine how quickly the
              * bubbles are moving toward
              * one another.
              */
-
             const relativeVelocityX =
                 bubbleB.velocityX -
                 bubbleA.velocityX;
@@ -989,7 +1192,6 @@ function resolveFamilyBubbleCollisions() {
              * apart, separation alone is
              * enough.
              */
-
             if (
                 velocityAlongNormal >= 0
             ) {
@@ -1000,12 +1202,10 @@ function resolveFamilyBubbleCollisions() {
             /*
              * Equal-mass elastic collision.
              *
-             * Since every bubble is the same
-             * size, treating them as equal
-             * mass gives a natural-looking
-             * bounce.
+             * This preserves the lively
+             * bouncing behavior used by the
+             * original Calendar bubbles.
              */
-
             const impulse =
                 -velocityAlongNormal;
 
@@ -1017,22 +1217,719 @@ function resolveFamilyBubbleCollisions() {
                 impulse * normalY;
 
 
-            bubbleA.velocityX -=
-                impulseX;
+            if (!bubbleA.dragging) {
+                bubbleA.velocityX -=
+                    impulseX;
 
-            bubbleA.velocityY -=
-                impulseY;
+                bubbleA.velocityY -=
+                    impulseY;
+            }
 
-            bubbleB.velocityX +=
-                impulseX;
 
-            bubbleB.velocityY +=
-                impulseY;
+            if (!bubbleB.dragging) {
+                bubbleB.velocityX +=
+                    impulseX;
+
+                bubbleB.velocityY +=
+                    impulseY;
+            }
+
+
+            limitFamilyBubbleSpeed(
+                bubbleA
+            );
+
+            limitFamilyBubbleSpeed(
+                bubbleB
+            );
         }
     }
 }
 
+function finishFamilyPoolGame() {
+    /*
+     * Prevent the win sequence from
+     * running more than once.
+     */
+
+    if (familyPoolGameWon) {
+        return;
+    }
+
+
+    familyPoolGameWon = true;
+
+
+    /*
+     * Stop pool physics immediately.
+     */
+
+    if (
+        familyPoolAnimationFrame !== null
+    ) {
+        cancelAnimationFrame(
+            familyPoolAnimationFrame
+        );
+
+        familyPoolAnimationFrame = null;
+    }
+
+
+    /*
+     * Show the large victory popup.
+     */
+
+    familyPoolWinPopup.classList.remove(
+        "hidden"
+    );
+
+
+    /*
+     * Leave the celebration visible for
+     * 2.5 seconds before returning to the
+     * Family Calendar.
+     */
+
+    setTimeout(
+        () => {
+
+            /*
+             * The player may have already
+             * navigated away.
+             */
+
+            if (
+                familyBubbleMode !== "game"
+            ) {
+                familyPoolWinPopup
+                    .classList.add(
+                        "hidden"
+                    );
+
+                return;
+            }
+
+
+            familyPoolWinPopup.classList.add(
+                "hidden"
+            );
+
+
+            closeGame();
+
+        },
+        2500
+    );
+}
+
+function checkFamilyPoolPockets() {
+    /*
+     * Pocket positions are measured from
+     * the actual rendered DOM so this works
+     * for both:
+     *
+     * Desktop landscape tables
+     * and
+     * Mobile portrait tables.
+     */
+
+    const surfaceRect =
+        poolPlayingSurface
+            .getBoundingClientRect();
+
+
+    const pocketData =
+        poolPockets.map(
+            (pocket) => {
+
+                const rect =
+                    pocket
+                        .getBoundingClientRect();
+
+
+                return {
+                    x:
+                        rect.left +
+                        rect.width / 2 -
+                        surfaceRect.left,
+
+                    y:
+                        rect.top +
+                        rect.height / 2 -
+                        surfaceRect.top,
+
+                    radius:
+                        Math.min(
+                            rect.width,
+                            rect.height
+                        ) / 2
+                };
+            }
+        );
+
+
+    familyBubbles.forEach(
+        (bubble) => {
+
+            /*
+             * A pocketed ball no longer
+             * participates in the game.
+             */
+
+            if (
+                bubble.pocketed ||
+                bubble.dragging
+            ) {
+                return;
+            }
+
+
+            const ballRadius =
+                bubble.size / 2;
+
+
+            const centerX =
+                bubble.x +
+                ballRadius;
+
+            const centerY =
+                bubble.y +
+                ballRadius;
+
+
+            const enteredPocket =
+                pocketData.some(
+                    (pocket) => {
+
+                        const distance =
+                            Math.hypot(
+                                centerX -
+                                    pocket.x,
+
+                                centerY -
+                                    pocket.y
+                            );
+
+
+                        /*
+                         * Slightly forgiving
+                         * detection makes the
+                         * pockets fun without
+                         * making them enormous.
+                         */
+
+                        const captureRadius =
+                            pocket.radius +
+                            ballRadius *
+                                0.95;
+
+
+                        return (
+                            distance <=
+                            captureRadius
+                        );
+                    }
+                );
+
+
+            if (!enteredPocket) {
+                return;
+            }
+
+
+            /*
+             * Sink this family member.
+             *
+             * Keep the bubble object alive
+             * so Exit Game can restore it.
+             */
+
+            bubble.pocketed = true;
+
+            bubble.velocityX = 0;
+            bubble.velocityY = 0;
+
+            bubble.dragging = false;
+            bubble.pointerId = null;
+
+                        bubble.element.style.display =
+                "none";
+        }
+    );
+
+
+    /*
+     * If every family member has been
+     * pocketed, the game is complete.
+     */
+
+    const allPocketed =
+        familyBubbles.length > 0 &&
+        familyBubbles.every(
+            (bubble) =>
+                bubble.pocketed
+        );
+
+
+    if (allPocketed) {
+        finishFamilyPoolGame();
+    }
+}
+
+
+function resolveFamilyPoolCollisions() {
+    for (
+        let i = 0;
+        i < familyBubbles.length;
+        i++
+    ) {
+        for (
+            let j = i + 1;
+            j < familyBubbles.length;
+            j++
+        ) {
+            const bubbleA =
+                familyBubbles[i];
+
+            const bubbleB =
+                familyBubbles[j];
+
+
+            if (
+                bubbleA.pocketed ||
+                bubbleB.pocketed
+            ) {
+                continue;
+            }
+
+
+            const radiusA =
+                bubbleA.size / 2;
+
+            const radiusB =
+                bubbleB.size / 2;
+
+
+            const centerAX =
+                bubbleA.x + radiusA;
+
+            const centerAY =
+                bubbleA.y + radiusA;
+
+            const centerBX =
+                bubbleB.x + radiusB;
+
+            const centerBY =
+                bubbleB.y + radiusB;
+
+
+            let deltaX =
+                centerBX - centerAX;
+
+            let deltaY =
+                centerBY - centerAY;
+
+
+            let distance =
+                Math.hypot(
+                    deltaX,
+                    deltaY
+                );
+
+
+            const minimumDistance =
+                radiusA + radiusB;
+
+
+            if (
+                distance >=
+                minimumDistance
+            ) {
+                continue;
+            }
+
+
+            if (distance === 0) {
+                deltaX = 1;
+                deltaY = 0;
+                distance = 1;
+            }
+
+
+            const normalX =
+                deltaX / distance;
+
+            const normalY =
+                deltaY / distance;
+
+
+            /*
+             * First physically separate
+             * overlapping balls.
+             */
+
+            const overlap =
+                minimumDistance -
+                distance;
+
+            const separation =
+                overlap / 2;
+
+
+            if (!bubbleA.dragging) {
+                bubbleA.x -=
+                    normalX *
+                    separation;
+
+                bubbleA.y -=
+                    normalY *
+                    separation;
+            }
+
+
+            if (!bubbleB.dragging) {
+                bubbleB.x +=
+                    normalX *
+                    separation;
+
+                bubbleB.y +=
+                    normalY *
+                    separation;
+            }
+
+
+            /*
+             * Find their relative speed
+             * along the collision normal.
+             */
+
+            const relativeVelocityX =
+                bubbleB.velocityX -
+                bubbleA.velocityX;
+
+            const relativeVelocityY =
+                bubbleB.velocityY -
+                bubbleA.velocityY;
+
+
+            const velocityAlongNormal =
+                relativeVelocityX *
+                    normalX +
+                relativeVelocityY *
+                    normalY;
+
+
+            if (
+                velocityAlongNormal >= 0
+            ) {
+                continue;
+            }
+
+
+            /*
+             * Equal-mass pool-ball collision
+             * with a tiny energy loss.
+             */
+
+            const impulse =
+                -(
+                    1 +
+                    FAMILY_POOL_COLLISION_BOUNCE
+                ) *
+                velocityAlongNormal /
+                2;
+
+
+            const impulseX =
+                impulse * normalX;
+
+            const impulseY =
+                impulse * normalY;
+
+
+            if (!bubbleA.dragging) {
+                bubbleA.velocityX -=
+                    impulseX;
+
+                bubbleA.velocityY -=
+                    impulseY;
+            }
+
+
+            if (!bubbleB.dragging) {
+                bubbleB.velocityX +=
+                    impulseX;
+
+                bubbleB.velocityY +=
+                    impulseY;
+            }
+
+
+            limitFamilyPoolBallSpeed(
+                bubbleA
+            );
+
+            limitFamilyPoolBallSpeed(
+                bubbleB
+            );
+        }
+    }
+}
+
+function animateFamilyPool() {
+    if (
+        familyBubbleMode !== "game" ||
+        gameView.classList.contains(
+            "hidden"
+        )
+    ) {
+        familyPoolAnimationFrame = null;
+        return;
+    }
+
+
+    const surfaceWidth =
+        poolPlayingSurface.clientWidth;
+
+    const surfaceHeight =
+        poolPlayingSurface.clientHeight;
+
+
+    familyBubbles.forEach(
+        (bubble) => {
+
+            if (
+                bubble.pocketed ||
+                bubble.dragging
+            ) {
+                return;
+            }
+
+
+            /*
+             * Rolling resistance.
+             *
+             * Unlike Calendar Mode, there
+             * is NO minimum drift speed.
+             */
+
+            bubble.velocityX *=
+                FAMILY_POOL_FRICTION;
+
+            bubble.velocityY *=
+                FAMILY_POOL_FRICTION;
+
+
+            const speed =
+                Math.hypot(
+                    bubble.velocityX,
+                    bubble.velocityY
+                );
+
+
+            /*
+             * Real pool balls eventually
+             * stop. Once movement is tiny,
+             * snap it exactly to zero.
+             */
+
+            if (
+                speed <
+                FAMILY_POOL_STOP_SPEED
+            ) {
+                bubble.velocityX = 0;
+                bubble.velocityY = 0;
+            }
+
+
+            limitFamilyPoolBallSpeed(
+                bubble
+            );
+
+
+            bubble.x +=
+                bubble.velocityX;
+
+            bubble.y +=
+                bubble.velocityY;
+
+
+            const maxX =
+                Math.max(
+                    0,
+                    surfaceWidth -
+                        bubble.size
+                );
+
+            const maxY =
+                Math.max(
+                    0,
+                    surfaceHeight -
+                        bubble.size
+                );
+
+
+            /*
+             * Left rail.
+             */
+
+            if (bubble.x < 0) {
+                bubble.x = 0;
+
+                bubble.velocityX =
+                    Math.abs(
+                        bubble.velocityX
+                    ) *
+                    FAMILY_POOL_RAIL_BOUNCE;
+            }
+
+
+            /*
+             * Right rail.
+             */
+
+            if (bubble.x > maxX) {
+                bubble.x = maxX;
+
+                bubble.velocityX =
+                    -Math.abs(
+                        bubble.velocityX
+                    ) *
+                    FAMILY_POOL_RAIL_BOUNCE;
+            }
+
+
+            /*
+             * Top rail.
+             */
+
+            if (bubble.y < 0) {
+                bubble.y = 0;
+
+                bubble.velocityY =
+                    Math.abs(
+                        bubble.velocityY
+                    ) *
+                    FAMILY_POOL_RAIL_BOUNCE;
+            }
+
+
+            /*
+             * Bottom rail.
+             */
+
+            if (bubble.y > maxY) {
+                bubble.y = maxY;
+
+                bubble.velocityY =
+                    -Math.abs(
+                        bubble.velocityY
+                    ) *
+                    FAMILY_POOL_RAIL_BOUNCE;
+            }
+        }
+    );
+
+
+    /*
+    * Check whether any moving ball has
+    * reached one of the six pockets.
+    */
+
+    checkFamilyPoolPockets();
+
+
+    /*
+    * Transfer momentum between the
+    * remaining balls.
+    */
+
+    resolveFamilyPoolCollisions();
+
+
+    /*
+     * Collisions can push a ball slightly
+     * outside the felt, so clamp everyone
+     * once more.
+     */
+
+    familyBubbles.forEach(
+        (bubble) => {
+
+            if (bubble.pocketed) {
+                return;
+            }
+
+
+            const maxX =
+                Math.max(
+                    0,
+                    surfaceWidth -
+                        bubble.size
+                );
+
+            const maxY =
+                Math.max(
+                    0,
+                    surfaceHeight -
+                        bubble.size
+                );
+
+
+            bubble.x =
+                Math.min(
+                    Math.max(
+                        bubble.x,
+                        0
+                    ),
+                    maxX
+                );
+
+            bubble.y =
+                Math.min(
+                    Math.max(
+                        bubble.y,
+                        0
+                    ),
+                    maxY
+                );
+        }
+    );
+
+
+    updateFamilyBubblePositions();
+
+
+    /*
+    * A pocket check may have completed
+    * the game during this frame.
+    *
+    * Do not schedule another pool frame
+    * after the win.
+    */
+
+    if (
+        familyPoolGameWon ||
+        familyBubbleMode !== "game"
+    ) {
+        familyPoolAnimationFrame = null;
+        return;
+    }
+
+
+    familyPoolAnimationFrame =
+        requestAnimationFrame(
+            animateFamilyPool
+        );
+}
+
 function animateFamilyBubbles() {
+        if (
+            familyBubbleMode !== "calendar"
+        ) {
+            familyBubbleAnimationFrame = null;
+            return;
+        }
     if (
         familyBubblesLayer.classList.contains(
             "hidden"
@@ -1228,8 +2125,628 @@ function animateFamilyBubbles() {
         );
 }
 
+function getFamilyPoolBubbleSize() {
+    return window.innerWidth <= 600
+        ? 42
+        : 56;
+}
+
+
+function moveFamilyBubblesToPoolLayer() {
+    familyBubbles.forEach(
+        (bubble) => {
+
+            poolBallsLayer.appendChild(
+                bubble.element
+            );
+
+
+            const size =
+                getFamilyPoolBubbleSize();
+
+
+            bubble.size = size;
+
+            bubble.element.style.width =
+                `${size}px`;
+
+            bubble.element.style.height =
+                `${size}px`;
+
+
+            bubble.velocityX = 0;
+            bubble.velocityY = 0;
+
+            bubble.dragging = false;
+            bubble.pointerId = null;
+
+            bubble.pocketed = false;
+
+            bubble.element.style.display = "";
+
+            bubble.element.classList.add(
+                "family-pool-ball"
+            );
+        }
+    );
+}
+
+
+function arrangeFamilyPoolBalls() {
+    if (
+        familyBubbles.length !== 14
+    ) {
+        return;
+    }
+
+
+    const surfaceWidth =
+        poolPlayingSurface.clientWidth;
+
+    const surfaceHeight =
+        poolPlayingSurface.clientHeight;
+
+
+    if (
+        surfaceWidth <= 0 ||
+        surfaceHeight <= 0
+    ) {
+        return;
+    }
+
+
+    /*
+     * Choose one random family member
+     * to act as the breaker.
+     */
+
+    const breakerIndex =
+        Math.floor(
+            Math.random() *
+            familyBubbles.length
+        );
+
+
+    familyPoolBreaker =
+        familyBubbles[breakerIndex];
+
+
+    const rackBubbles =
+        familyBubbles.filter(
+            (bubble) =>
+                bubble !==
+                familyPoolBreaker
+        );
+
+
+    const size =
+        familyPoolBreaker.size;
+
+    const radius =
+        size / 2;
+
+
+    /*
+     * Keep a tiny amount of space between
+     * bubbles so the rack begins stable,
+     * but close enough for the break to
+     * transfer through the whole group.
+     */
+
+    const spacing = 2;
+
+    const step =
+        size + spacing;
+
+
+    const isPortrait =
+        surfaceHeight >
+        surfaceWidth;
+
+
+    /*
+     * -------------------------------
+     * BREAKER
+     * -------------------------------
+     *
+     * Landscape:
+     * breaker on the left.
+     *
+     * Portrait:
+     * breaker near the top.
+     */
+
+    if (!isPortrait) {
+        familyPoolBreaker.x =
+            surfaceWidth * 0.20 -
+            radius;
+
+        familyPoolBreaker.y =
+            surfaceHeight / 2 -
+            radius;
+    } else {
+        familyPoolBreaker.x =
+            surfaceWidth / 2 -
+            radius;
+
+        familyPoolBreaker.y =
+            surfaceHeight * 0.18 -
+            radius;
+    }
+
+
+    /*
+     * -------------------------------
+     * 13-BUBBLE RACK
+     * -------------------------------
+     *
+     * Pattern:
+     *
+     *       ●
+     *      ● ●
+     *     ● ● ●
+     *    ● ● ● ●
+     *     ● ● ●
+     *
+     * 1 + 2 + 3 + 4 + 3 = 13
+     */
+
+    const rows = [
+        1,
+        2,
+        3,
+        4,
+        3
+    ];
+
+
+    let bubbleIndex = 0;
+
+
+    if (!isPortrait) {
+
+        /*
+         * Landscape table:
+         *
+         * Rack points toward the breaker.
+         * Rows extend toward the right.
+         */
+
+        const rackStartX =
+            surfaceWidth * 0.68;
+
+
+        rows.forEach(
+            (count, rowIndex) => {
+
+                const rowX =
+                    rackStartX +
+                    rowIndex *
+                    step *
+                    0.87;
+
+
+                const rowHeight =
+                    (count - 1) *
+                    step;
+
+
+                const startY =
+                    surfaceHeight / 2 -
+                    rowHeight / 2 -
+                    radius;
+
+
+                for (
+                    let position = 0;
+                    position < count;
+                    position++
+                ) {
+                    const bubble =
+                        rackBubbles[
+                            bubbleIndex
+                        ];
+
+
+                    bubble.x =
+                        rowX -
+                        radius;
+
+                    bubble.y =
+                        startY +
+                        position *
+                        step;
+
+
+                    bubble.velocityX = 0;
+                    bubble.velocityY = 0;
+
+
+                    bubbleIndex++;
+                }
+            }
+        );
+
+    } else {
+
+        /*
+         * Portrait table:
+         *
+         * Rack points upward toward the
+         * breaker and extends downward.
+         */
+
+        const rackStartY =
+            surfaceHeight * 0.64;
+
+
+        rows.forEach(
+            (count, rowIndex) => {
+
+                const rowY =
+                    rackStartY +
+                    rowIndex *
+                    step *
+                    0.87;
+
+
+                const rowWidth =
+                    (count - 1) *
+                    step;
+
+
+                const startX =
+                    surfaceWidth / 2 -
+                    rowWidth / 2 -
+                    radius;
+
+
+                for (
+                    let position = 0;
+                    position < count;
+                    position++
+                ) {
+                    const bubble =
+                        rackBubbles[
+                            bubbleIndex
+                        ];
+
+
+                    bubble.x =
+                        startX +
+                        position *
+                        step;
+
+                    bubble.y =
+                        rowY -
+                        radius;
+
+
+                    bubble.velocityX = 0;
+                    bubble.velocityY = 0;
+
+
+                    bubbleIndex++;
+                }
+            }
+        );
+    }
+
+
+    updateFamilyBubblePositions();
+}
+
+
+function startFamilyPoolGame() {
+    /*
+     * Switch to Game Mode FIRST.
+     *
+     * This prevents the normal Calendar
+     * physics loop from continuing to
+     * control the bubbles.
+     */
+
+    familyBubbleMode = "game";
+
+    familyPoolGameWon = false;
+
+    familyPoolWinPopup.classList.add(
+        "hidden"
+    );
+
+
+    /*
+     * Completely stop the normal
+     * Calendar bubble animation.
+     */
+
+    if (
+        familyBubbleAnimationFrame !== null
+    ) {
+        cancelAnimationFrame(
+            familyBubbleAnimationFrame
+        );
+
+        familyBubbleAnimationFrame = null;
+    }
+
+
+    /*
+     * If a pool animation somehow still
+     * exists from a previous game, stop it
+     * before starting a fresh one.
+     */
+
+    if (
+        familyPoolAnimationFrame !== null
+    ) {
+        cancelAnimationFrame(
+            familyPoolAnimationFrame
+        );
+
+        familyPoolAnimationFrame = null;
+    }
+
+
+    /*
+     * Make sure all 14 family bubbles
+     * have been created.
+     */
+
+    createFamilyBubbles();
+
+
+    /*
+     * Hide the normal full-screen
+     * Calendar bubble layer.
+     */
+
+    familyBubblesLayer.classList.add(
+        "hidden"
+    );
+
+
+    /*
+     * Transfer the existing bubble
+     * elements into the pool table.
+     *
+     * This also changes them to their
+     * smaller Game Mode size and resets
+     * their velocities to zero.
+     */
+
+    moveFamilyBubblesToPoolLayer();
+
+
+    /*
+     * Wait until the browser has laid out
+     * the visible pool table.
+     *
+     * Then:
+     * 1. Pick a random breaker.
+     * 2. Arrange the other 13 in the rack.
+     * 3. Start ONLY the pool physics loop.
+     */
+
+    requestAnimationFrame(
+        () => {
+            /*
+             * Make sure we did not leave
+             * Game Mode before this frame
+             * was reached.
+             */
+
+            if (
+                familyBubbleMode !== "game"
+            ) {
+                return;
+            }
+
+
+            arrangeFamilyPoolBalls();
+
+
+            familyPoolAnimationFrame =
+                requestAnimationFrame(
+                    animateFamilyPool
+                );
+        }
+    );
+}
+
+
+function resetFamilyBubblesToCalendar() {
+    /*
+     * Switch modes FIRST so Calendar Mode
+     * is allowed to restart.
+     */
+
+    familyBubbleMode = "calendar";
+
+
+    /*
+     * Completely stop the pool animation.
+     */
+
+    if (
+        familyPoolAnimationFrame !== null
+    ) {
+        cancelAnimationFrame(
+            familyPoolAnimationFrame
+        );
+
+        familyPoolAnimationFrame = null;
+    }
+
+
+    familyPoolBreaker = null;
+
+
+    /*
+     * Move every bubble back into the
+     * full-screen Calendar bubble layer.
+     */
+
+    familyBubbles.forEach(
+        (bubble) => {
+
+            familyBubblesLayer.appendChild(
+                bubble.element
+            );
+
+
+            const size =
+                window.innerWidth <= 600
+                    ? 48
+                    : 64;
+
+
+            bubble.size = size;
+
+            bubble.element.style.width =
+                `${size}px`;
+
+            bubble.element.style.height =
+                `${size}px`;
+
+
+            bubble.element.classList.remove(
+                "family-pool-ball"
+            );
+
+            bubble.pocketed = false;
+
+            bubble.element.style.display = "";
+
+
+            /*
+            * Give each bubble a fresh
+            * Calendar position.
+            */
+
+            const maxX =
+                Math.max(
+                    0,
+                    window.innerWidth -
+                        size
+                );
+
+            const maxY =
+                Math.max(
+                    0,
+                    window.innerHeight -
+                        size
+                );
+
+
+            bubble.x =
+                randomBetween(
+                    0,
+                    maxX
+                );
+
+            bubble.y =
+                randomBetween(
+                    0,
+                    maxY
+                );
+
+
+            /*
+             * Restore the normal gentle
+             * Calendar movement.
+             */
+
+            bubble.velocityX =
+                randomBetween(
+                    -0.18,
+                    0.18
+                );
+
+            bubble.velocityY =
+                randomBetween(
+                    -0.18,
+                    0.18
+                );
+
+
+            if (
+                Math.abs(
+                    bubble.velocityX
+                ) < 0.06
+            ) {
+                bubble.velocityX =
+                    bubble.velocityX < 0
+                        ? -0.06
+                        : 0.06;
+            }
+
+
+            if (
+                Math.abs(
+                    bubble.velocityY
+                ) < 0.06
+            ) {
+                bubble.velocityY =
+                    bubble.velocityY < 0
+                        ? -0.06
+                        : 0.06;
+            }
+
+
+            bubble.dragging = false;
+            bubble.pointerId = null;
+        }
+    );
+
+
+    /*
+     * Make the Calendar layer visible
+     * BEFORE restarting its animation.
+     */
+
+    familyBubblesLayer.classList.remove(
+        "hidden"
+    );
+
+
+    /*
+     * Resolve any random overlaps.
+     */
+
+    for (
+        let pass = 0;
+        pass < 8;
+        pass++
+    ) {
+        resolveFamilyBubbleCollisions();
+    }
+
+
+    updateFamilyBubblePositions();
+
+
+    /*
+     * Explicitly restart Calendar physics.
+     */
+
+    if (
+        familyBubbleAnimationFrame === null
+    ) {
+        familyBubbleAnimationFrame =
+            requestAnimationFrame(
+                animateFamilyBubbles
+            );
+    }
+}
 
 function showFamilyBubbles() {
+    if (
+        familyBubbleMode !== "calendar"
+    ) {
+        return;
+    }
+
     if (!familyBubblesLayer) {
         return;
     }
@@ -1368,18 +2885,50 @@ function setBrowserView(view, data = {}) {
 
 
 function showCalendarFromHistory() {
+    /*
+     * If browser navigation is returning
+     * from Game Mode, fully restore the
+     * bubbles to Calendar Mode first.
+     */
+
+    if (
+        familyBubbleMode === "game"
+    ) {
+        resetFamilyBubblesToCalendar();
+    }
+
+
+    gameView.classList.add(
+        "hidden"
+    );
+
+    photosButton.classList.remove(
+        "hidden"
+    );
+
+    gameButton.classList.remove(
+        "hidden"
+    );
+
+
     selectedDate = null;
 
     resetEventForm();
     resetBirthdayForm();
 
-    dayView.classList.add("hidden");
+
+    dayView.classList.add(
+        "hidden"
+    );
 
     photoArchiveView.classList.add(
         "hidden"
     );
 
-    monthView.classList.remove("hidden");
+    monthView.classList.remove(
+        "hidden"
+    );
+
 
     renderCalendar();
 
@@ -3811,6 +5360,97 @@ function renderPhotoArchive(photos) {
     );
 }
 
+function openGame() {
+    /*
+     * Switch the visible application view
+     * to Family Pool.
+     */
+
+    monthView.classList.add(
+        "hidden"
+    );
+
+    dayView.classList.add(
+        "hidden"
+    );
+
+    photoArchiveView.classList.add(
+        "hidden"
+    );
+
+    gameView.classList.remove(
+        "hidden"
+    );
+
+
+    /*
+     * Hide Calendar-only header controls.
+     */
+
+    photosButton.classList.add(
+        "hidden"
+    );
+
+    gameButton.classList.add(
+        "hidden"
+    );
+
+
+    /*
+     * Transfer the existing family bubbles
+     * into the pool and start ONLY the
+     * pool physics system.
+     *
+     * Do NOT call hideFamilyBubbles()
+     * after this. startFamilyPoolGame()
+     * handles the transition itself.
+     */
+
+    startFamilyPoolGame();
+
+
+    history.pushState(
+        {
+            view: "game"
+        },
+        "",
+        "#game"
+    );
+}
+
+function closeGame() {
+    gameView.classList.add(
+        "hidden"
+    );
+
+    monthView.classList.remove(
+        "hidden"
+    );
+
+
+    photosButton.classList.remove(
+        "hidden"
+    );
+
+    gameButton.classList.remove(
+        "hidden"
+    );
+
+
+    renderCalendar();
+
+    resetFamilyBubblesToCalendar();
+
+
+    history.replaceState(
+        {
+            view: "calendar"
+        },
+        "",
+        window.location.pathname
+    );
+}
+
 async function openPhotoArchive(
     addToHistory = true
 ) {
@@ -3839,6 +5479,21 @@ function closePhotoArchive() {
 photosButton.addEventListener(
     "click",
     openPhotoArchive
+);
+
+gameButton.addEventListener(
+    "click",
+    () => {
+        openGame();
+    }
+);
+
+
+exitGameButton.addEventListener(
+    "click",
+    () => {
+        closeGame();
+    }
 );
 
 backFromPhotosButton.addEventListener(

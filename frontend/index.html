@@ -89,6 +89,14 @@
                      Photos
                  </button>
 
+                <button
+                    id="gameButton"
+                    class="secondary-button"
+                    type="button"
+                >
+                    Game
+                </button>                 
+
                   <button
                     id="logoutButton"
                    class="secondary-button"
@@ -484,6 +492,93 @@
                     </p>
                 </div>
 
+            </section>
+
+            <!-- FAMILY POOL GAME -->
+            <section
+                id="gameView"
+                class="game-view hidden"
+            >
+                <div class="game-header">
+
+                    <div>
+                        <h2>Family Pool</h2>
+
+                        <p>
+                            Sink the whole family! 🎱
+                        </p>
+                    </div>
+
+                    <button
+                        id="exitGameButton"
+                        class="secondary-button"
+                        type="button"
+                    >
+                        Exit Game
+                    </button>
+
+                </div>
+
+                <div
+                    id="familyPoolWinPopup"
+                    class="family-pool-win-popup hidden"
+                >
+                    <div class="family-pool-win-card">
+                        <div class="family-pool-win-ball">
+                            🎱
+                        </div>
+
+                        <h2>
+                            You sunk the whole family!
+                        </h2>
+                    </div>
+                </div>
+
+                <div
+                
+                    id="poolTable"
+                    class="pool-table"
+                >
+    <div
+        id="poolPlayingSurface"
+        class="pool-playing-surface"
+    >
+        <div
+            class="pool-pocket pool-pocket-top-left"
+            data-pocket="top-left"
+        ></div>
+
+        <div
+            class="pool-pocket pool-pocket-top-middle"
+            data-pocket="top-middle"
+        ></div>
+
+        <div
+            class="pool-pocket pool-pocket-top-right"
+            data-pocket="top-right"
+        ></div>
+
+        <div
+            class="pool-pocket pool-pocket-bottom-left"
+            data-pocket="bottom-left"
+        ></div>
+
+        <div
+            class="pool-pocket pool-pocket-bottom-middle"
+            data-pocket="bottom-middle"
+        ></div>
+
+        <div
+            class="pool-pocket pool-pocket-bottom-right"
+            data-pocket="bottom-right"
+        ></div>
+
+        <div
+            id="poolBallsLayer"
+            class="pool-balls-layer"
+        ></div>
+    </div>
+</div>
             </section>
 
         </main>
