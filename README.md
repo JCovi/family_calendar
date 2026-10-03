@@ -1,14 +1,15 @@
 # 📅 Family Calendar
 
-A private, full-stack family calendar and memory-sharing web application built for my family.
+A private, full-stack family calendar, photo archive, and interactive family web application built for my family.
 
-Family Calendar combines shared events, recurring birthdays, private photo storage, and a family photo archive in one centralized space. It also includes interactive floating family-photo bubbles with custom collision and pointer physics — because family software should be useful *and* a little fun. 🫧
+Family Calendar combines shared events, recurring birthdays, private photo storage, and a family memory archive in one centralized space. It also includes interactive floating family-photo bubbles with custom physics and a fully playable **Family Pool** mini-game — because family software should be useful *and* a little fun. 🫧🎱
 
 ---
 
 ## ✨ Features
 
 ### 📆 Shared Calendar
+
 - Interactive monthly calendar
 - Previous/next month navigation
 - Year selection
@@ -19,18 +20,21 @@ Family Calendar combines shared events, recurring birthdays, private photo stora
 - Responsive desktop and mobile layouts
 
 ### 📅 Events
+
 - Create, edit, and delete family events
 - Event title, date, time, location, and notes
 - Move existing events between dates
 - Shared across the entire family
 
 ### 🎂 Recurring Birthdays
+
 - Add, edit, and delete birthdays
 - Optional birthday notes
 - Automatically recur every year
 - Dedicated birthday indicators and Day View cards
 
 ### 📸 Family Photos
+
 - Upload photos to specific calendar dates
 - Add and edit captions
 - View photos directly from Day View
@@ -39,6 +43,7 @@ Family Calendar combines shared events, recurring birthdays, private photo stora
 - Private cloud storage through Cloudflare R2
 
 ### 🫧 Interactive Family Bubbles
+
 The main calendar includes floating family-member photo bubbles powered by a custom vanilla JavaScript physics system.
 
 They support:
@@ -54,11 +59,40 @@ They support:
 
 Grab one and throw it into another. They'll actually collide. 💥
 
+### 🎱 Family Pool
+
+The same family-photo bubbles become pool balls in a custom-built **Family Pool mini-game**.
+
+Select **Game** from the calendar to move all 14 family members onto a responsive pool table.
+
+Each game includes:
+
+- One randomly selected family member as the breaker
+- A 13-person family rack
+- Separate pool-specific physics
+- Equal-mass ball collisions and momentum transfer
+- Rail bouncing with energy loss
+- Rolling friction that brings balls naturally to a stop
+- Mouse, touch, and stylus throwing
+- Six functional pockets
+- Pocketed balls removed from active physics
+- Automatic win detection
+- Victory popup and automatic return to the calendar
+- Complete game reset when exiting or starting again
+
+The table also changes orientation based on the device:
+
+- **Desktop:** landscape pool table
+- **Mobile:** portrait pool table with repositioned pockets
+
+No external game or physics engine is used. The collision, movement, rail, pocket, drag, throw, and win systems are implemented directly in vanilla JavaScript.
+
 ---
 
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - HTML5
 - CSS3
 - Vanilla JavaScript
@@ -67,6 +101,7 @@ Grab one and throw it into another. They'll actually collide. 💥
 - History API
 
 ### Backend
+
 - Node.js
 - Express.js
 - MongoDB + Mongoose
@@ -141,7 +176,7 @@ Sensitive credentials are stored in environment variables and are never committe
 
 ## 📸 Private Photo Storage
 
-Family photos are **not stored in the Git repository or public frontend directory**.
+Family photos and family-member bubble images are **not stored in the Git repository or public frontend directory**.
 
 Instead:
 
@@ -151,7 +186,7 @@ Instead:
 4. Photo metadata is stored in **MongoDB Atlas**.
 5. Authenticated API routes retrieve private images when needed.
 
-The same protected architecture is used for the floating family-member images.
+The family-member images used by both the floating bubble system and Family Pool are retrieved through the same protected backend architecture.
 
 ---
 
@@ -235,7 +270,7 @@ Then start the server:
 node server.js
 ```
 
-The development server runs on:
+The development server runs at:
 
 ```text
 http://localhost:5000
@@ -248,21 +283,68 @@ http://localhost:5000
 ## 🧠 Technical Highlights
 
 ### Custom Calendar Engine
+
 The calendar UI, month calculations, Day View, indicators, and navigation are implemented directly in vanilla JavaScript without a frontend framework.
 
 ### Safe Date Handling
+
 Date-only values are handled carefully to prevent UTC conversion from shifting events onto the wrong calendar day.
 
 ### Recurring Birthdays
-Birthdays are stored by month and day so they can automatically appear in every displayed year without creating duplicate annual events.
 
-### Custom Bubble Physics
-The floating family bubbles use custom collision detection, momentum, friction, boundary response, pointer repulsion, dragging, and throwing physics without an external physics library.
+Birthdays are stored by month and day so they automatically appear in every displayed year without creating duplicate annual events.
+
+### Dual Physics Systems
+
+Family Calendar now contains **two distinct custom physics systems** built around the same family-photo bubbles.
+
+**Calendar Mode** provides:
+
+- Continuous autonomous movement
+- Bubble collisions
+- Boundary bouncing
+- Pointer proximity repulsion
+- Dragging and throwing
+- Momentum and gradual slowdown
+
+**Family Pool Mode** provides:
+
+- Stationary pool balls
+- Rolling friction
+- Equal-mass collision response
+- Momentum transfer
+- Rail collisions
+- Energy loss
+- Pocket detection
+- Ball removal
+- Win-state detection
+
+Switching between modes transfers the same bubble elements between the full-screen calendar layer and the pool table while resetting the appropriate state and physics.
+
+### Responsive Game Layout
+
+Family Pool dynamically adapts to screen size.
+
+Desktop devices use a traditional landscape table with corner and top/bottom center pockets. Mobile devices use a portrait table, with the middle pockets repositioned to the left and right rails.
+
+Physics calculations use the actual rendered playing-surface dimensions rather than assuming a fixed table size.
+
+### Pointer-Based Interaction
+
+The bubble systems use the **Pointer Events API**, allowing the same interaction code to support:
+
+- Mouse
+- Touch
+- Stylus
+
+Thrown bubbles and pool balls retain momentum based on pointer movement before release.
 
 ### Browser History
-The History API provides natural back/forward navigation between the calendar, Day View, and photo archive without requiring a frontend routing framework.
+
+The History API provides natural back/forward navigation between the calendar, Day View, photo archive, and game without requiring a frontend routing framework.
 
 ### Private Cloud Images
+
 Cloudflare R2 objects remain private and are streamed through authenticated Express endpoints instead of being exposed through public object URLs.
 
 ---
@@ -313,6 +395,11 @@ Production secrets are configured as environment variables on Render rather than
 - [x] Production deployment
 - [x] Custom domain
 - [x] Interactive family bubbles
+- [x] Custom bubble physics
+- [x] Family Pool mini-game
+- [x] Pool-specific physics
+- [x] Responsive desktop/mobile pool layouts
+- [x] Pocket and win-state system
 
 ### Remaining for v1
 
@@ -322,6 +409,7 @@ Production secrets are configured as environment variables on Render rather than
 - [ ] Login screen redesign
 - [ ] Final desktop/mobile consistency pass
 - [ ] Production regression testing
+- [ ] Code cleanup and final v1 checkpoint
 
 ---
 
@@ -329,9 +417,11 @@ Production secrets are configured as environment variables on Render rather than
 
 Family Calendar was built around a simple idea: create one private place where my family can both **plan what's coming next and preserve what already happened**.
 
-It's part calendar, part family photo album, and part memory archive — built from scratch around the people who will actually use it.
+It's part calendar, part family photo album, part memory archive — and now, apparently, part pool hall.
 
-And yes, you can throw your family members across the screen. 🫧😄
+It's built from scratch around the people who will actually use it.
+
+And yes, you can grab your family members, throw them across the calendar, use one of them to break a rack of the others, and sink your entire family into pool-table pockets. 🎱😄
 
 ---
 
