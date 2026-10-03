@@ -66,6 +66,7 @@
 body {
     margin: 0;
     min-height: 100vh;
+    min-height: 100dvh;
 
     font-family:
         Inter,
@@ -2258,5 +2259,134 @@ body {
 
         transform:
             translate(48%, -50%);
+    }
+}
+
+/* =========================================
+   MOBILE SINGLE-SCREEN LAYOUT
+   ========================================= */
+
+@media (max-width: 600px) {
+
+    /*
+     * Use the actual visible mobile viewport.
+     * Prevent the Calendar and Family Pool
+     * screens from creating page scroll.
+     */
+    html,
+    body {
+        width: 100%;
+        height: 100%;
+        height: 100dvh;
+        overflow-x: hidden;
+    }
+
+
+    /*
+     * The application itself never needs to
+     * become taller than the visible screen
+     * while the main Calendar or Pool is open.
+     */
+    #appContainer {
+        min-height: 100dvh;
+    }
+
+
+    /* ---------- CALENDAR ---------- */
+
+    /*
+     * Remove the unnecessary bottom margin
+     * from the mobile calendar.
+     */
+    .calendar-container {
+        margin:
+            12px 0 0;
+    }
+
+
+    /*
+     * The floating family layer is fixed to
+     * the visible viewport, so it cannot
+     * create document height.
+     */
+    .family-bubbles-layer {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+
+    /* ---------- FAMILY POOL ---------- */
+
+    /*
+     * Family Pool gets exactly the space
+     * underneath the site header.
+     */
+    .game-view {
+        width: min(
+            calc(100% - 20px),
+            440px
+        );
+
+        height: calc(
+            100dvh - 69px
+        );
+
+        margin: 0 auto;
+
+        padding:
+            12px 0
+            10px;
+
+        display: flex;
+        flex-direction: column;
+
+        overflow: hidden;
+    }
+
+
+    .game-view.hidden {
+        display: none;
+    }
+
+
+    /*
+     * Keep the title/Exit Game row compact
+     * and prevent it from consuming table
+     * space.
+     */
+    .game-header {
+        flex: 0 0 auto;
+
+        margin-bottom: 10px;
+    }
+
+
+    /*
+     * Instead of forcing a 1:1.75 ratio,
+     * let the table occupy whatever vertical
+     * space remains on this specific phone.
+     *
+     * This is what makes the entire table
+     * visible without scrolling.
+     */
+    .pool-table {
+        flex: 1 1 auto;
+
+        width: min(
+            100%,
+            390px
+        );
+
+        height: auto;
+        min-height: 0;
+
+        aspect-ratio: auto;
+
+        margin:
+            0 auto
+            10px;
     }
 }
