@@ -610,48 +610,231 @@ body {
     letter-spacing: -0.3px;
 }
 
-/* FORMS */
+/* =========================================
+   FORMS
+   ========================================= */
 
 .event-form {
+    position: relative;
+
     margin-top: 20px;
-    padding: 20px;
-    background-color: #f8f8f8;
-    border: 1px solid #ddd;
-    border-radius: 10px;
+    padding: 24px;
+
+    background:
+        linear-gradient(
+            145deg,
+            var(--color-surface) 0%,
+            var(--color-surface-soft) 100%
+        );
+
+    border:
+        1px solid var(--color-border);
+
+    border-radius:
+        var(--radius-large);
+
+    box-shadow:
+        var(--shadow-small);
+
+    overflow: hidden;
 }
+
+
+/*
+ * Event-colored accent along the
+ * left side of the form.
+ */
+.event-form::before {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+
+    width: 4px;
+
+    background:
+        linear-gradient(
+            180deg,
+            var(--color-event),
+            #6b9d89
+        );
+}
+
+
+/* ---------- FORM HEADING ---------- */
 
 .event-form h4 {
-    margin: 0 0 20px;
+    margin:
+        0 0
+        22px;
+
+    color:
+        var(--color-text);
+
     font-size: 20px;
+    font-weight: 750;
+    letter-spacing: -0.25px;
 }
 
+
+/* ---------- FORM FIELDS ---------- */
+
 .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 18px;
 }
 
 .form-group label {
     display: block;
-    font-weight: bold;
-    margin-bottom: 6px;
+
+    margin-bottom: 7px;
+
+    color:
+        var(--color-text);
+
+    font-size: 14px;
+    font-weight: 700;
 }
 
+
+/*
+ * All normal text, time, password,
+ * and textarea controls use the same
+ * visual language.
+ */
 .form-group input,
 .form-group textarea {
     width: 100%;
-    padding: 10px;
+
+    padding:
+        11px 12px;
+
+    border:
+        1px solid var(--color-border-strong);
+
+    border-radius:
+        var(--radius-small);
+
+    background:
+        var(--color-surface);
+
+    color:
+        var(--color-text);
+
     font: inherit;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    font-size: 15px;
+
+    box-shadow:
+        inset 0 1px 2px
+            rgba(31, 48, 41, 0.025);
+
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background-color var(--transition-fast);
 }
 
-.form-group textarea {
-    resize: vertical;
+.form-group input:hover,
+.form-group textarea:hover {
+    border-color:
+        #b7c6bf;
 }
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+
+    border-color:
+        var(--color-primary);
+
+    background:
+        #ffffff;
+
+    box-shadow:
+        0 0 0 3px
+            rgba(49, 95, 80, 0.12);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color:
+        var(--color-text-light);
+}
+
+
+/* ---------- TEXTAREAS ---------- */
+
+.form-group textarea {
+    min-height: 110px;
+
+    resize: vertical;
+
+    line-height: 1.5;
+}
+
+
+/* ---------- TIME INPUT ---------- */
+
+.form-group input[type="time"] {
+    min-height: 44px;
+}
+
+
+/* ---------- FORM ACTIONS ---------- */
 
 .form-actions {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+
     gap: 10px;
+
+    margin-top: 24px;
+    padding-top: 18px;
+
+    border-top:
+        1px solid var(--color-border);
+}
+
+.form-actions button {
+    min-width: 110px;
+}
+
+
+/* =========================================
+   BIRTHDAY FORM
+   ========================================= */
+
+.birthday-form {
+    background:
+        linear-gradient(
+            145deg,
+            var(--color-surface) 0%,
+            var(--color-birthday-soft) 180%
+        );
+
+    border-color:
+        rgba(201, 111, 131, 0.22);
+}
+
+.birthday-form::before {
+    background:
+        linear-gradient(
+            180deg,
+            var(--color-birthday),
+            #df9aaa
+        );
+}
+
+.birthday-form input:focus,
+.birthday-form textarea:focus {
+    border-color:
+        var(--color-birthday);
+
+    box-shadow:
+        0 0 0 3px
+            rgba(201, 111, 131, 0.13);
 }
 
 /* EVENT DISPLAY */
@@ -1399,8 +1582,54 @@ body {
         font-size: 14px;
     }
 
-    .event-form {
-        padding: 15px;
+       .event-form {
+        margin-top: 16px;
+
+        padding:
+            18px 15px
+            16px;
+
+        border-radius:
+            var(--radius-medium);
+    }
+
+
+    .event-form h4 {
+        margin-bottom: 18px;
+
+        font-size: 18px;
+    }
+
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+
+    .form-group input,
+    .form-group textarea {
+        padding:
+            11px 10px;
+
+        font-size: 16px;
+    }
+
+
+    /*
+     * 16px prevents iOS browsers from
+     * zooming into form controls when
+     * the user taps them.
+     */
+    .form-group textarea {
+        min-height: 100px;
+    }
+
+
+    .form-actions {
+        margin-top: 20px;
+        padding-top: 15px;
+
+        gap: 8px;
     }
 
     .event-card {
