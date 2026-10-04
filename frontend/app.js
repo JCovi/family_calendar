@@ -185,7 +185,12 @@ const photosButton =
         "photosButton"
     );
 
-    const gameButton =
+const bubblesButton =
+    document.getElementById(
+        "bubblesButton"
+    );
+
+const gameButton =
     document.getElementById(
         "gameButton"
     );
@@ -298,6 +303,8 @@ let familyBubbleAnimationFrame = null;
 
 let familyBubbleMode = "calendar";
 
+let familyBubblesEnabled = false;
+
 let familyPoolBreaker = null;
 
 let familyPoolAnimationFrame = null;
@@ -327,6 +334,24 @@ function randomBetween(min, max) {
             (max - min) +
         min
     );
+}
+
+function updateBubblesButton() {
+    if (!bubblesButton) {
+        return;
+    }
+
+    bubblesButton.setAttribute(
+        "aria-pressed",
+        familyBubblesEnabled
+            ? "true"
+            : "false"
+    );
+
+    bubblesButton.textContent =
+        familyBubblesEnabled
+            ? "Bubbles On"
+            : "Bubbles";
 }
 
 
@@ -2701,18 +2726,9 @@ function resetFamilyBubblesToCalendar() {
 
 
     /*
-     * Make the Calendar layer visible
-     * BEFORE restarting its animation.
-     */
-
-    familyBubblesLayer.classList.remove(
-        "hidden"
-    );
-
-
-    /*
-     * Resolve any random overlaps.
-     */
+    * Resolve any random overlaps before
+    * returning the bubbles to Calendar Mode.
+    */
 
     for (
         let pass = 0;
@@ -2727,23 +2743,23 @@ function resetFamilyBubblesToCalendar() {
 
 
     /*
-     * Explicitly restart Calendar physics.
-     */
+    * Restore the normal Calendar bubbles only
+    * if the family has them enabled.
+    */
 
-    if (
-        familyBubbleAnimationFrame === null
-    ) {
-        familyBubbleAnimationFrame =
-            requestAnimationFrame(
-                animateFamilyBubbles
-            );
+    if (familyBubblesEnabled) {
+        showFamilyBubbles();
+    } else {
+        hideFamilyBubbles();
     }
 }
 
 function showFamilyBubbles() {
     if (
+        !familyBubblesEnabled ||
         familyBubbleMode !== "calendar"
     ) {
+        hideFamilyBubbles();
         return;
     }
 
@@ -2903,6 +2919,10 @@ function showCalendarFromHistory() {
     );
 
     photosButton.classList.remove(
+    "hidden"
+    );
+
+    bubblesButton.classList.remove(
         "hidden"
     );
 
@@ -2930,9 +2950,10 @@ function showCalendarFromHistory() {
     );
 
 
-    renderCalendar();
+       renderCalendar();
 
-    showFamilyBubbles();
+        updateBubblesButton();
+        showFamilyBubbles();
 }
 
 
@@ -2971,6 +2992,9 @@ window.addEventListener(
 /* AUTHENTICATION */
 
 function showLoginScreen() {
+    familyBubblesEnabled = false;
+
+    updateBubblesButton();
     hideFamilyBubbles();
 
     loadingScreen.classList.add("hidden");
@@ -3006,7 +3030,8 @@ function showApplication() {
 
         renderCalendar();
 
-    showFamilyBubbles();
+        updateBubblesButton();
+        showFamilyBubbles();
 }
 
 async function checkAuthentication() {
@@ -5388,6 +5413,10 @@ function openGame() {
      */
 
     photosButton.classList.add(
+    "hidden"
+    );
+
+    bubblesButton.classList.add(
         "hidden"
     );
 
@@ -5429,6 +5458,10 @@ function closeGame() {
 
 
     photosButton.classList.remove(
+    "hidden"
+    );
+
+    bubblesButton.classList.remove(
         "hidden"
     );
 
@@ -5479,6 +5512,22 @@ function closePhotoArchive() {
 photosButton.addEventListener(
     "click",
     openPhotoArchive
+);
+
+bubblesButton.addEventListener(
+    "click",
+    () => {
+        familyBubblesEnabled =
+            !familyBubblesEnabled;
+
+        updateBubblesButton();
+
+        if (familyBubblesEnabled) {
+            showFamilyBubbles();
+        } else {
+            hideFamilyBubbles();
+        }
+    }
 );
 
 gameButton.addEventListener(
